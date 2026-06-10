@@ -34,12 +34,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func setupWindow() {
         let w = NSWindow(
             contentRect: .zero,
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false)
         w.title = "Poco"
         w.isReleasedWhenClosed = false // 关闭只隐藏，窗口对象常驻
-        w.contentView = NSHostingView(rootView: MainView().environmentObject(engine))
+        // 隐藏标题栏让内容整张铺满（交通灯保留），可拖拽窗口背景移动
+        w.titlebarAppearsTransparent = true
+        w.titleVisibility = .hidden
+        w.isMovableByWindowBackground = true
+        let hosting = NSHostingView(rootView: MainView().environmentObject(engine))
+        hosting.safeAreaRegions = [] // 内容铺满到隐藏标题栏之下，由视图自己给交通灯留位
+        w.contentView = hosting
         w.setContentSize(NSSize(width: 324, height: 416))
         w.center()
         w.delegate = self
