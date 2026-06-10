@@ -48,6 +48,10 @@ public partial class App : Application
             MacNotifier.Clicked = ShowMainWindow;
             MacNotifier.TryInit();
 
+            // 菜单栏倒计时文本（dotnet run 与 .app 均可用）：点击文字 → 唤出主窗口
+            MacTrayText.Clicked = ShowMainWindow;
+            MacTrayText.TryInit();
+
             SetupTray();
         }
 
@@ -93,11 +97,13 @@ public partial class App : Application
         };
         _trayIcon.Clicked += (_, _) => ShowMainWindow();
 
-        // 倒计时实时同步到托盘提示
+        // 倒计时实时同步到托盘提示与菜单栏文字
         _viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainWindowViewModel.TrayTooltip) && _trayIcon is not null)
                 _trayIcon.ToolTipText = _viewModel.TrayTooltip;
+            else if (e.PropertyName == nameof(MainWindowViewModel.TrayText))
+                MacTrayText.SetText(_viewModel.TrayText);
         };
     }
 

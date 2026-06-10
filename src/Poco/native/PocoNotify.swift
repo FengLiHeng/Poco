@@ -24,16 +24,21 @@ private final class PocoDelegate: NSObject, UNUserNotificationCenterDelegate {
     }
 }
 
+// 无 bundle 身份的进程（dotnet run）调 UNUserNotificationCenter 会直接崩溃，
+// 必须先判 bundleIdentifier；返回 0 让 .NET 侧回退 osascript。
 @_cdecl("poco_notify_init")
-public func poco_notify_init(_ cb: @escaping @convention(c) () -> Void) {
+public func poco_notify_init(_ cb: @escaping @convention(c) () -> Void) -> Int32 {
+    guard Bundle.main.bundleIdentifier != nil else { return 0 }
     PocoDelegate.shared.onClick = cb
     let center = UNUserNotificationCenter.current()
     center.delegate = PocoDelegate.shared
     center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    return 1
 }
 
 @_cdecl("poco_notify_post")
 public func poco_notify_post(_ title: UnsafePointer<CChar>, _ body: UnsafePointer<CChar>) {
+    guard Bundle.main.bundleIdentifier != nil else { return }
     let content = UNMutableNotificationContent()
     content.title = String(cString: title)
     content.body = String(cString: body)

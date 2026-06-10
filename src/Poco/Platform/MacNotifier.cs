@@ -12,7 +12,7 @@ namespace Poco.Platform;
 internal static unsafe class MacNotifier
 {
     [DllImport("PocoNotify", EntryPoint = "poco_notify_init")]
-    private static extern void NativeInit(IntPtr clickCallback);
+    private static extern int NativeInit(IntPtr clickCallback);
 
     [DllImport("PocoNotify", EntryPoint = "poco_notify_post")]
     private static extern void NativePost(
@@ -29,12 +29,12 @@ internal static unsafe class MacNotifier
         if (!OperatingSystem.IsMacOS()) return false;
         try
         {
-            NativeInit((IntPtr)(delegate* unmanaged<void>)&OnClicked);
-            _available = true;
+            // 返回 0 表示无 bundle 身份（dotnet run），通知不可用 → 回退 osascript
+            _available = NativeInit((IntPtr)(delegate* unmanaged<void>)&OnClicked) != 0;
         }
         catch
         {
-            _available = false; // 非 .app 运行：dylib 不存在
+            _available = false; // dylib 不存在
         }
         return _available;
     }

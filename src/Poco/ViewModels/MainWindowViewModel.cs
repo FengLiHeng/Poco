@@ -216,6 +216,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(MinutesText));
         OnPropertyChanged(nameof(SecondsText));
         OnPropertyChanged(nameof(TrayTooltip));
+        OnPropertyChanged(nameof(TrayText));
     }
 
     partial void OnFocusMinutesChanged(int value)
@@ -260,6 +261,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowPauseIcon));
         OnPropertyChanged(nameof(ShowPlayIcon));
         OnPropertyChanged(nameof(TrayTooltip));
+        OnPropertyChanged(nameof(TrayText));
         UpdateDots();
     }
 
@@ -303,4 +305,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowPlayIcon => !IsRunning;
 
     public string TrayTooltip => $"Poco · {PhaseCjk} {MinutesText}:{SecondsText}";
+
+    /// <summary>菜单栏倒计时文本（运行/暂停才显示；null 隐藏文字项）。</summary>
+    public string? TrayText => TrayTextFormat.For(State, RemainingSeconds);
 }

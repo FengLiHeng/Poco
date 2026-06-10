@@ -38,10 +38,11 @@ dotnet publish Poco.csproj -c "$CONFIG" -r "$RID" --self-contained true \
 echo "==> 拷贝发布产物到 Contents/MacOS"
 cp -R "$OUT/publish/." "$MACOS/"
 
-echo "==> 编译原生通知库 libPocoNotify.dylib"
+echo "==> 编译原生库 libPocoNotify.dylib（通知 + 菜单栏倒计时文本）"
 swiftc -O -emit-library -target arm64-apple-macosx12.0 \
   -o "$MACOS/libPocoNotify.dylib" \
-  native/PocoNotify.swift -framework UserNotifications
+  native/PocoNotify.swift native/PocoTray.swift \
+  -framework UserNotifications -framework AppKit
 
 echo "==> 生成 Poco.icns"
 ICONSET="$OUT/Poco.iconset"

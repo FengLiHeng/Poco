@@ -23,4 +23,14 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     </ItemGroup>
+
+    <!-- macOS 开发期：把原生 dylib 编进输出目录，让 dotnet run 也能用菜单栏倒计时
+         （通知仍需 .app bundle 身份，dylib 内部已守卫）。增量：源文件没变就跳过。 -->
+    <Target Name="BuildPocoNativeDylib" AfterTargets="Build"
+            Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+            Inputs="native/PocoNotify.swift;native/PocoTray.swift"
+            Outputs="$(OutDir)libPocoNotify.dylib">
+        <Exec Command="swiftc -O -emit-library -o &quot;$(OutDir)libPocoNotify.dylib&quot; native/PocoNotify.swift native/PocoTray.swift -framework UserNotifications -framework AppKit"
+              WorkingDirectory="$(MSBuildProjectDirectory)" />
+    </Target>
 </Project>
