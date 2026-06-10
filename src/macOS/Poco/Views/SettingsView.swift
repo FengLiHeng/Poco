@@ -7,6 +7,17 @@ struct SettingsView: View {
 
     private var theme: PocoTheme { engine.isDarkTheme ? .dark : .light }
 
+    private enum SettingsType {
+        static let title = Font.system(size: 15.5, weight: .medium)
+        static let meta = Font.system(size: 11.5, weight: .regular)
+        static let rowLabel = Font.system(size: 14.5, weight: .regular)
+        static let segmentActive = Font.system(size: 13.5, weight: .medium)
+        static let segmentInactive = Font.system(size: 13.5, weight: .regular)
+        static let value = Font.system(size: 23, weight: .regular)
+        static let unit = Font.system(size: 11.5, weight: .regular)
+        static let link = Font.system(size: 12.5, weight: .regular)
+    }
+
     var body: some View {
         ZStack {
             theme.bg.ignoresSafeArea()
@@ -38,15 +49,15 @@ struct SettingsView: View {
             HStack {
                 Button("‹ 返回") { engine.isSettingsOpen = false }
                     .buttonStyle(LinkButtonStyle(normal: theme.inkFaint, hover: theme.inkSoft))
-                    .font(.system(size: 13))
+                    .font(SettingsType.link)
                 Spacer()
                 Text("时长 · 分钟")
-                    .font(.system(size: 12))
-                    .kerning(0.8)
+                    .font(SettingsType.meta)
+                    .kerning(0.5)
                     .foregroundStyle(theme.inkFaint)
             }
             Text("设置")
-                .font(.system(size: 15.5, weight: .semibold))
+                .font(SettingsType.title)
                 .foregroundStyle(theme.ink)
         }
         .padding(.horizontal, 16)
@@ -57,8 +68,8 @@ struct SettingsView: View {
     private var themeRow: some View {
         HStack {
             Text("主题")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(theme.ink)
+                .font(SettingsType.rowLabel)
+                .foregroundStyle(theme.inkSoft)
             Spacer()
             segmented
         }
@@ -79,7 +90,7 @@ struct SettingsView: View {
     private func segmentButton(_ title: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13.5, weight: isActive ? .medium : .regular))
+                .font(isActive ? SettingsType.segmentActive : SettingsType.segmentInactive)
                 .foregroundStyle(isActive ? theme.ink : theme.inkSoft)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 5)
@@ -92,8 +103,8 @@ struct SettingsView: View {
         HStack(spacing: 9) {
             Circle().fill(dotColor).frame(width: 8, height: 8)
             Text(name)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(theme.ink)
+                .font(SettingsType.rowLabel)
+                .foregroundStyle(theme.inkSoft)
             Spacer()
 
             HStack(spacing: 4) {
@@ -104,13 +115,13 @@ struct SettingsView: View {
 
                 HStack(alignment: .lastTextBaseline, spacing: 1) {
                     Text("\(value.wrappedValue)")
-                        .font(.system(size: 23, weight: .medium))
+                        .font(SettingsType.value)
                         .monospacedDigit()
                         .foregroundStyle(theme.ink)
                         .contentTransition(.numericText(value: Double(value.wrappedValue)))
                         .animation(.snappy(duration: 0.25), value: value.wrappedValue)
                     Text("分")
-                        .font(.system(size: 12))
+                        .font(SettingsType.unit)
                         .foregroundStyle(theme.inkFaint)
                         .padding(.leading, 2)
                 }
@@ -128,16 +139,16 @@ struct SettingsView: View {
     private var footer: some View {
         HStack {
             Text("每 4 个专注 → 1 次大休")
-                .font(.system(size: 12))
+                .font(SettingsType.meta)
                 .kerning(0.3)
                 .foregroundStyle(theme.inkFaint)
             Spacer()
             Button("恢复默认") { engine.restoreDefaults() }
                 .buttonStyle(LinkButtonStyle(normal: theme.focusInk, hover: theme.focusInk))
-                .font(.system(size: 12.5))
+                .font(SettingsType.link)
             Button("退出") { NSApp.terminate(nil) }
                 .buttonStyle(LinkButtonStyle(normal: theme.inkFaint, hover: theme.ink))
-                .font(.system(size: 12.5))
+                .font(SettingsType.link)
                 .padding(.leading, 8)
         }
         .padding(.horizontal, 16)

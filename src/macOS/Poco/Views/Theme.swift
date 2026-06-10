@@ -132,7 +132,7 @@ struct StepButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 8).fill(hovered ? theme.btnHover : theme.btn))
