@@ -8,7 +8,7 @@ Poco 是一个**常驻 macOS 菜单栏的极简番茄钟**，用 Avalonia（.NET
 
 **当前状态**：主窗口 UI 与番茄钟核心逻辑已按 UI 设计稿实现（浅/深双主题、专注/短休/大休轮回、设置面板、托盘菜单）。产品 / 交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)，视觉设计稿原始 HTML/CSS 见 `/tmp/poco_design/`（来自 Claude Design 交付包）。
 
-**已实现的 macOS 平台能力**：阶段自然结束的**系统原生通知**（Poco 自有图标 + 点击唤出主窗口）——需打包成 `.app` 运行；机制见下「macOS 打包与原生通知」。`MainWindowViewModel.PhaseFinished` 是挂载点（跳过不触发）。**菜单栏倒计时文本**——纯文本 `NSStatusItem`（双槽位方案，与 Avalonia TrayIcon 并存），运行/暂停时显示 `MM:SS`（暂停带 ⏸ 前缀），其余状态隐藏；状态→文本映射在 [Models/TrayTextFormat.cs](src/Poco/Models/TrayTextFormat.cs)（有单测），原生实现在 [native/PocoTray.swift](src/Poco/native/PocoTray.swift)，托管封装 [Platform/MacTrayText.cs](src/Poco/Platform/MacTrayText.cs)；macOS 下 `dotnet build` 会自动把 dylib 编进输出目录（csproj 的 `BuildPocoNativeDylib` 目标），故 `dotnet run` 即可见，点击文字唤出主窗口。设计文档见 [docs/2026-06-10-菜单栏倒计时文本-design.md](docs/2026-06-10-菜单栏倒计时文本-design.md)。
+**已实现的 macOS 平台能力**：阶段自然结束的**系统原生通知**（Poco 自有图标 + 点击唤出主窗口）——需打包成 `.app` 运行；机制见下「macOS 打包与原生通知」。`MainWindowViewModel.PhaseFinished` 是挂载点（跳过不触发）。**菜单栏托盘（单槽位 NSStatusItem）**——macOS 下弃用 Avalonia TrayIcon，整个托盘走原生：未运行（Ready/Finished）显示番茄图标，运行显示 `MM:SS` 倒计时文本、暂停带 ⏸ 前缀（同一槽位图标⇄文本切换）；交互为**双击唤出主窗口、右键弹菜单**（单击不响应，避免误触），菜单项经命令 id 回调进 `App.OnNativeTrayCommand` 分发到 VM 命令。状态→文本映射在 [Models/TrayTextFormat.cs](src/Poco/Models/TrayTextFormat.cs)（有单测），原生实现在 [native/PocoTray.swift](src/Poco/native/PocoTray.swift)，托管封装 [Platform/MacTray.cs](src/Poco/Platform/MacTray.cs)；非 macOS 平台回退到 Avalonia TrayIcon + NativeMenu（`App.SetupAvaloniaTray`）。macOS 下 `dotnet build` 会自动把 dylib 编进输出目录（csproj 的 `BuildPocoNativeDylib` 目标），故 `dotnet run` 即可见。设计文档见 [docs/2026-06-10-菜单栏倒计时文本-design.md](docs/2026-06-10-菜单栏倒计时文本-design.md)。
 
 **尚未实现**：Dock 图标跳动 / 角标。
 

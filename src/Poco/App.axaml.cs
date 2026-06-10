@@ -48,10 +48,6 @@ public partial class App : Application
             MacNotifier.Clicked = ShowMainWindow;
             MacNotifier.TryInit();
 
-            // 菜单栏倒计时文本（dotnet run 与 .app 均可用）：点击文字 → 唤出主窗口
-            MacTrayText.Clicked = ShowMainWindow;
-            MacTrayText.TryInit();
-
             SetupTray();
         }
 
@@ -59,13 +55,68 @@ public partial class App : Application
     }
 
     // ============================================================
-    // 菜单栏「甜点」形态：托盘图标 + 倒计时提示 + 下拉菜单
-    // macOS 上 TrayIcon 必须挂 NativeMenu 才有响应（点击状态栏图标弹菜单；
-    // Clicked 事件在 macOS 不触发）。所以把「显示主窗口」放在菜单第一项作为
-    // 打开窗口的入口；Clicked 仍保留，在 Windows/Linux 上支持单击直接开窗口。
-    // 注：动态倒计时文本用 ToolTipText 承载（NSStatusItem 标题暂不直接支持）。
+    // 菜单栏「甜点」形态：
+    // macOS → 原生单槽位 NSStatusItem（未运行=番茄图标，运行/暂停=倒计时文本；
+    //          双击唤窗、右键弹菜单），经 libPocoNotify.dylib。
+    // 其他平台 → Avalonia TrayIcon + NativeMenu 回退（倒计时放 ToolTipText）。
     // ============================================================
     private void SetupTray()
+    {
+        if (_viewModel is null) return;
+        if (SetupNativeTray()) return;
+        SetupAvaloniaTray();
+    }
+
+    /// <summary>macOS 原生托盘；dylib 不可用（非 macOS）时返回 false 走回退。</summary>
+    private bool SetupNativeTray()
+    {
+        if (_viewModel is null || !MacTray.TryInit()) return false;
+
+        MacTray.DoubleClicked = ShowMainWindow;
+        MacTray.MenuCommand = OnNativeTrayCommand;
+
+        // 图标态用的番茄图：内嵌资源解到临时文件交给原生层
+        try
+        {
+            var iconPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "poco-tray.png");
+            using (var asset = AssetLoader.Open(new Uri("avares://Poco/Assets/tomato.png")))
+            using (var file = System.IO.File.Create(iconPath))
+                asset.CopyTo(file);
+            MacTray.SetIcon(iconPath);
+        }
+        catch
+        {
+            // 图标缺失不影响文本态与菜单
+        }
+
+        MacTray.SetTooltip(_viewModel.TrayTooltip);
+        _viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.TrayText))
+                MacTray.SetText(_viewModel.TrayText);
+            else if (e.PropertyName == nameof(MainWindowViewModel.TrayTooltip))
+                MacTray.SetTooltip(_viewModel.TrayTooltip);
+        };
+        return true;
+    }
+
+    /// <summary>菜单命令分发，id 与 PocoTray.swift 的 buildMenu 约定一致。</summary>
+    private void OnNativeTrayCommand(int id)
+    {
+        if (_viewModel is null) return;
+        switch (id)
+        {
+            case 1: ShowMainWindow(); break;
+            case 2: _viewModel.IsSettingsOpen = true; ShowMainWindow(); break;
+            case 3: _viewModel.PrimaryActionCommand.Execute(null); break;
+            case 4: _viewModel.ResetCommand.Execute(null); break;
+            case 5: _viewModel.SkipCommand.Execute(null); break;
+            case 6: ExitApp(); break;
+        }
+    }
+
+    // Windows/Linux 回退：TrayIcon 必须挂 NativeMenu；Clicked 单击直接开窗口。
+    private void SetupAvaloniaTray()
     {
         if (_viewModel is null) return;
 
@@ -97,13 +148,11 @@ public partial class App : Application
         };
         _trayIcon.Clicked += (_, _) => ShowMainWindow();
 
-        // 倒计时实时同步到托盘提示与菜单栏文字
+        // 倒计时实时同步到托盘提示
         _viewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainWindowViewModel.TrayTooltip) && _trayIcon is not null)
                 _trayIcon.ToolTipText = _viewModel.TrayTooltip;
-            else if (e.PropertyName == nameof(MainWindowViewModel.TrayText))
-                MacTrayText.SetText(_viewModel.TrayText);
         };
     }
 
