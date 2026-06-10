@@ -1,0 +1,15 @@
+# .NET 构建产物
+bin/
+obj/
+*.user
+
+# macOS
+.DS_Store
+
+# 工具会话临时产物
+.superpowers/
+
+# IDE
+.vs/
+.idea/
+.vscode/

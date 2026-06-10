@@ -1,0 +1,244 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Poco.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Poco.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/tomato.png"
+        Title="Poco"
+        Width="324" Height="416"
+        CanResize="False"
+        FontFamily="fonts:Poco#HarmonyOS Sans SC"
+        Background="{DynamicResource BgBrush}">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Border Classes="poco-win"
+            Classes.focus="{Binding IsFocus}"
+            Classes.rest="{Binding IsRest}"
+            Classes.ready="{Binding IsReady}"
+            Classes.running="{Binding IsRunning}"
+            Classes.paused="{Binding IsPaused}"
+            Classes.finished="{Binding IsFinished}">
+        <Panel>
+
+            <!-- ============ 主窗口 ============ -->
+            <Grid IsVisible="{Binding !IsSettingsOpen}" RowDefinitions="Auto,*,Auto">
+
+                <!-- 顶栏：齿轮 -->
+                <Button Grid.Row="0" Classes="gear" Command="{Binding OpenSettingsCommand}"
+                        HorizontalAlignment="Right" Margin="0,14,14,0">
+                    <Viewbox Width="16" Height="16">
+                        <Canvas Width="24" Height="24">
+                            <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.8"
+                                  StrokeLineCap="Round" StrokeJoin="Round"
+                                  Data="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0z"/>
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+
+                <!-- 主体 -->
+                <StackPanel Grid.Row="1" Spacing="18"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                    <!-- 阶段标签 -->
+                    <StackPanel Classes="phase-tag">
+                        <TextBlock Classes="cjk accent-ink" Text="{Binding PhaseCjk}"/>
+                    </StackPanel>
+
+                    <!-- 倒计时 -->
+                    <StackPanel Classes="countdown">
+                        <TextBlock Text="{Binding MinutesText}"/>
+                        <TextBlock Classes="sep" Text=":"/>
+                        <TextBlock Text="{Binding SecondsText}"/>
+                    </StackPanel>
+
+                    <!-- 提示行（已暂停 / 已结束）-->
+                    <TextBlock Classes="sub-hint" Classes.accent="{Binding IsHintAccent}"
+                               Text="{Binding HintText}" IsVisible="{Binding HasHint}"
+                               Margin="0,-8,0,0"/>
+
+                    <!-- 轮次圆点 -->
+                    <ItemsControl Classes="dots" ItemsSource="{Binding Dots}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="11"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DotItem">
+                                <Grid Width="16" Height="16">
+                                    <Ellipse Classes="ring" Classes.show="{Binding Current}"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Ellipse Classes="rdot" Classes.on="{Binding On}"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 控制区 -->
+                    <StackPanel Orientation="Horizontal" Spacing="14" HorizontalAlignment="Center"
+                                Margin="0,2,0,0">
+                        <!-- 重置 -->
+                        <StackPanel Spacing="7" VerticalAlignment="Center">
+                            <Button Classes="btn-ghost" Command="{Binding ResetCommand}">
+                                <Viewbox Width="17" Height="17">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="2"
+                                              StrokeLineCap="Round" StrokeJoin="Round"
+                                              Data="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Button>
+                            <TextBlock Classes="ctl-label" Text="重置"/>
+                        </StackPanel>
+
+                        <!-- 开始 · 暂停 -->
+                        <StackPanel Spacing="7" VerticalAlignment="Center">
+                            <Button Classes="btn-primary" Command="{Binding PrimaryActionCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                    <Viewbox Width="16" Height="16" VerticalAlignment="Center">
+                                        <Panel>
+                                            <Path IsVisible="{Binding ShowPlayIcon}"
+                                                  Fill="{Binding $parent[Button].Foreground}"
+                                                  Data="M6 3 20 12 6 21 Z"/>
+                                            <Path IsVisible="{Binding ShowPauseIcon}"
+                                                  Fill="{Binding $parent[Button].Foreground}"
+                                                  Data="M6 4h3.5v16H6z M14.5 4H18v16h-3.5z"/>
+                                        </Panel>
+                                    </Viewbox>
+                                    <TextBlock Text="{Binding PrimaryLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Classes="ctl-label" Text="·" Opacity="0"/>
+                        </StackPanel>
+
+                        <!-- 跳过 -->
+                        <StackPanel Spacing="7" VerticalAlignment="Center">
+                            <Button Classes="btn-ghost" Command="{Binding SkipCommand}">
+                                <Viewbox Width="18" Height="18">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Fill="{Binding $parent[Button].Foreground}"
+                                              Data="M5 4 15 12 5 20 Z"/>
+                                        <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="2"
+                                              StrokeLineCap="Round" Data="M19 5v14"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Button>
+                            <TextBlock Classes="ctl-label" Text="跳过"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <Panel Grid.Row="2" Height="14"/>
+            </Grid>
+
+            <!-- ============ 设置 ============ -->
+            <Grid IsVisible="{Binding IsSettingsOpen}" RowDefinitions="Auto,*,Auto">
+
+                <!-- 头部 -->
+                <Border Grid.Row="0" BorderBrush="{DynamicResource HairlineBrush}"
+                        BorderThickness="0,0,0,1" Padding="16,13,16,14">
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <Button Grid.Column="0" Classes="set-link" Content="‹ 返回"
+                                HorizontalAlignment="Left" Command="{Binding CloseSettingsCommand}"/>
+                        <TextBlock Grid.Column="1" Classes="set-title" Text="设置"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Classes="set-meta" Text="时长 · 分钟"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- 设置项 -->
+                <StackPanel Grid.Row="1" Margin="16,8,16,4">
+                    <!-- 主题 -->
+                    <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,0,0,1" Padding="2,14">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Classes="rname" Text="主题" VerticalAlignment="Center"/>
+                            <Border Grid.Column="1" Classes="segmented" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                    <Button Classes="seg" Classes.active="{Binding IsLightTheme}"
+                                            Content="浅色" Command="{Binding SelectLightCommand}"/>
+                                    <Button Classes="seg" Classes.active="{Binding IsDarkTheme}"
+                                            Content="深色" Command="{Binding SelectDarkCommand}"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <!-- 专注 -->
+                    <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,0,0,1" Padding="2,16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                <Ellipse Width="8" Height="8" Fill="{DynamicResource FocusBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Classes="rname" Text="专注时长"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <Button Classes="step-btn" Content="−" Command="{Binding FocusDecCommand}"/>
+                                <Panel Width="46">
+                                    <StackPanel Orientation="Horizontal" Spacing="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Classes="step-val" Text="{Binding FocusMinutes}"/>
+                                        <TextBlock Classes="unit" Text="分" VerticalAlignment="Bottom" Margin="1,0,0,4"/>
+                                    </StackPanel>
+                                </Panel>
+                                <Button Classes="step-btn" Content="+" Command="{Binding FocusIncCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <!-- 短休 -->
+                    <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,0,0,1" Padding="2,16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                                <Ellipse Width="8" Height="8" Fill="{DynamicResource RestBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Classes="rname" Text="短休时长"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <Button Classes="step-btn" Content="−" Command="{Binding ShortDecCommand}"/>
+                                <Panel Width="46">
+                                    <StackPanel Orientation="Horizontal" Spacing="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Classes="step-val" Text="{Binding ShortMinutes}"/>
+                                        <TextBlock Classes="unit" Text="分" VerticalAlignment="Bottom" Margin="1,0,0,4"/>
+                                    </StackPanel>
+                                </Panel>
+                                <Button Classes="step-btn" Content="+" Command="{Binding ShortIncCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <!-- 大休 -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="2,16">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource RestBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Classes="rname" Text="大休时长"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <Button Classes="step-btn" Content="−" Command="{Binding LongDecCommand}"/>
+                            <Panel Width="46">
+                                <StackPanel Orientation="Horizontal" Spacing="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Classes="step-val" Text="{Binding LongMinutes}"/>
+                                    <TextBlock Classes="unit" Text="分" VerticalAlignment="Bottom" Margin="1,0,0,4"/>
+                                </StackPanel>
+                            </Panel>
+                            <Button Classes="step-btn" Content="+" Command="{Binding LongIncCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- 底部 -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="16,13,16,15">
+                    <TextBlock Grid.Column="0" Classes="foot-note" Text="每 4 个专注 → 1 次大休"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <Button Classes="reset-default" Content="恢复默认"
+                                Command="{Binding RestoreDefaultsCommand}"/>
+                        <Button Classes="reset-default quit" Content="退出"
+                                Command="{Binding QuitCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+        </Panel>
+    </Border>
+</Window>
