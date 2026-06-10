@@ -23,16 +23,17 @@ struct PocoTheme {
         ink: Color(hex: 0x39332E), inkSoft: Color(hex: 0x6D6661), inkFaint: Color(hex: 0x9D9792),
         hairline: Color(hex: 0xE0DCD7), btn: Color(hex: 0xEAE7E1), btnHover: Color(hex: 0xE3DFD9),
         onAccent: Color(hex: 0xFBFAF7),
-        focus: Color(hex: 0xB67D61), focusInk: Color(hex: 0x93573B),
-        rest: Color(hex: 0x619197), restInk: Color(hex: 0x386C76))
+        // 专注色：鲜亮暖橙（陶土色大面积铺开发闷，进度环需要更亮的主色）
+        focus: Color(hex: 0xE8772E), focusInk: Color(hex: 0xC25A14),
+        rest: Color(hex: 0x4D9BA1), restInk: Color(hex: 0x2F767D))
 
     static let dark = PocoTheme(
         bg: Color(hex: 0x201D19), surface: Color(hex: 0x282420),
         ink: Color(hex: 0xE4DFD8), inkSoft: Color(hex: 0xA39D97), inkFaint: Color(hex: 0x6D6862),
         hairline: Color(hex: 0x3D3834), btn: Color(hex: 0x37322D), btnHover: Color(hex: 0x423C37),
         onAccent: Color(hex: 0x1A1612),
-        focus: Color(hex: 0xD49371), focusInk: Color(hex: 0xE3A480),
-        rest: Color(hex: 0x7DB5B9), restInk: Color(hex: 0x8BC3C8))
+        focus: Color(hex: 0xF2954E), focusInk: Color(hex: 0xF6AC6E),
+        rest: Color(hex: 0x6FBEC4), restInk: Color(hex: 0x8FD2D8))
 
     /// 当前阶段的语义色（圆点 / 主按钮 / 结束态数字）
     func accent(isFocus: Bool) -> Color { isFocus ? focus : rest }

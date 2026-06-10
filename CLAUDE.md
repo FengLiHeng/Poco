@@ -44,7 +44,8 @@ src/macOS/
       SettingsStore.swift    #   UserDefaults 持久化（三时长 + isDark）
     Views/                   # SwiftUI，自定义设计语言（不用系统控件默认样式）
       Theme.swift            #   双主题色板（PocoTheme.light/.dark）+ 自定义 ButtonStyle（胶囊主按钮/幽灵圆钮/步进钮/文字链）
-      MainView.swift         #   主界面 + 呼吸动画（运行 4.5s / 结束 1.15s 脉动）；isSettingsOpen 时滑入 SettingsView（同窗）
+      MainView.swift         #   主界面：进度环仪器（待开始满环→运行消减→结束归零，含刻度/光晕）+ 呼吸动画
+                             #   （运行 4.5s / 结束 1.15s 脉动）；isSettingsOpen 时滑入 SettingsView（同窗）
       SettingsView.swift     #   自定义分段主题切换 + 三个时长步进行 + 恢复默认/退出
     Tray/StatusItemController.swift   # NSStatusItem 单槽位：双击唤窗、右键菜单、单击不响应；订阅 engine.objectWillChange 刷新
     Notify/NotificationManager.swift  # UNUserNotificationCenter：阶段自然结束发横幅，点击唤窗

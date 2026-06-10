@@ -38,27 +38,9 @@ struct MainView: View {
 
             Spacer()
 
-            VStack(spacing: 18) {
-                // 阶段标签
-                Text(engine.phaseCjk)
-                    .font(.system(size: 15, weight: .semibold))
-                    .kerning(4)
-                    .foregroundStyle(accentInk)
-
-                // 倒计时（运行中缓慢呼吸；结束后较快脉动提示操作）
-                Text("\(engine.minutesText):\(engine.secondsText)")
-                    .font(.system(size: 84, weight: .light))
-                    .monospacedDigit()
-                    .foregroundStyle(countdownColor)
-                    .breathing(active: engine.state == .running, period: 4.5, minOpacity: 0.62)
-                    .breathing(active: engine.state == .finished, period: 1.15, minOpacity: 0.42)
-
-                // 提示行（已暂停 / 已结束）
-                Text(engine.hintText ?? " ")
-                    .font(.system(size: 14))
-                    .foregroundStyle(engine.state == .finished ? accentInk : theme.inkSoft)
-                    .opacity(engine.hintText == nil ? 0 : 1)
-                    .padding(.top, -8)
+            VStack(spacing: 20) {
+                // 进度环仪器：轨道 + 语义色进度弧，阶段/数字/提示收在环内
+                ring
 
                 // 轮次圆点
                 HStack(spacing: 11) {
@@ -108,6 +90,68 @@ struct MainView: View {
         case .finished: return accent
         default: return theme.ink
         }
+    }
+
+    // ============================================================
+    // 进度环：待开始满环 → 运行顺时针消减 → 结束归零；圆头弧 + 细刻度 + 径向光晕
+    // ============================================================
+    private static let ringSize: CGFloat = 220
+    private static let ringWidth: CGFloat = 6
+
+    private var ring: some View {
+        ZStack {
+            // 12 个细刻度（贴轨道内侧）
+            ForEach(0..<12, id: \.self) { i in
+                Capsule()
+                    .fill(theme.hairline)
+                    .frame(width: 1.5, height: 4)
+                    .offset(y: -(Self.ringSize / 2 - Self.ringWidth - 8))
+                    .rotationEffect(.degrees(Double(i) * 30))
+            }
+
+            // 轨道（显式定尺寸，避免被 ZStack 提案撑大）
+            Circle()
+                .stroke(theme.btn, lineWidth: Self.ringWidth)
+                .frame(width: Self.ringSize, height: Self.ringSize)
+
+            // 进度弧（从 12 点起顺时针，剩余比例）
+            Circle()
+                .trim(from: 0, to: engine.progress)
+                .stroke(accent, style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
+                .frame(width: Self.ringSize, height: Self.ringSize)
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.5), value: engine.progress)
+
+            // 环心：阶段标签 + 倒计时 + 提示
+            VStack(spacing: 10) {
+                Text(engine.phaseCjk)
+                    .font(.system(size: 13, weight: .semibold))
+                    .kerning(4)
+                    .foregroundStyle(accentInk)
+
+                // 倒计时（运行中缓慢呼吸；结束后较快脉动提示操作）
+                Text("\(engine.minutesText):\(engine.secondsText)")
+                    .font(.system(size: 48, weight: .light))
+                    .monospacedDigit()
+                    .foregroundStyle(countdownColor)
+                    .breathing(active: engine.state == .running, period: 4.5, minOpacity: 0.62)
+                    .breathing(active: engine.state == .finished, period: 1.15, minOpacity: 0.42)
+
+                // 提示行（已暂停 / 已结束；空态占位保持环心稳定）
+                Text(engine.hintText ?? " ")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(engine.state == .finished ? accentInk : theme.inkSoft)
+                    .opacity(engine.hintText == nil ? 0 : 1)
+            }
+        }
+        .frame(width: Self.ringSize, height: Self.ringSize)
+        // 氛围光晕：极淡的语义色径向渐变，给仪器一点纵深（background 不参与布局）
+        .background(
+            Circle()
+                .fill(RadialGradient(
+                    colors: [accent.opacity(0.08), accent.opacity(0)],
+                    center: .center, startRadius: 10, endRadius: Self.ringSize * 0.62))
+                .frame(width: Self.ringSize * 1.3, height: Self.ringSize * 1.3))
     }
 
     private func dot(index: Int) -> some View {

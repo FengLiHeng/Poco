@@ -192,6 +192,12 @@ final class PomodoroEngine: ObservableObject {
     var minutesText: String { String(format: "%02d", remainingSeconds / 60) }
     var secondsText: String { String(format: "%02d", remainingSeconds % 60) }
 
+    /// 当前阶段剩余比例（1=满 → 0=归零），驱动进度环。
+    var progress: Double {
+        let total = phaseSeconds(phase)
+        return total > 0 ? Double(remainingSeconds) / Double(total) : 0
+    }
+
     var isFocus: Bool { phase == .focus }
 
     var hintText: String? {
