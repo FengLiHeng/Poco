@@ -57,7 +57,8 @@ final class PomodoroEngine: ObservableObject {
     private func startTimer() {
         // 250ms 刷新让墙钟显示更跟手；剩余时长仍按整秒展示
         let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.tick() }
+            // 挂在主 RunLoop 上必然在主线程回调，直接断言隔离避免每 tick 派发一次 Task
+            MainActor.assumeIsolated { self?.tick() }
         }
         RunLoop.main.add(t, forMode: .common)
         timer = t
@@ -159,10 +160,17 @@ final class PomodoroEngine: ObservableObject {
     // 设置持久化
     // ============================================================
     private func persistDuration(_ changed: PocoPhase, oldValue: Int) {
+        let newValue: Int
         switch changed {
-        case .focus: SettingsStore.focusMinutes = focusMinutes
-        case .short: SettingsStore.shortMinutes = shortMinutes
-        case .long: SettingsStore.longMinutes = longMinutes
+        case .focus: newValue = focusMinutes
+        case .short: newValue = shortMinutes
+        case .long: newValue = longMinutes
+        }
+        guard newValue != oldValue else { return } // 步进到边界后重复点击不再触发写盘
+        switch changed {
+        case .focus: SettingsStore.focusMinutes = newValue
+        case .short: SettingsStore.shortMinutes = newValue
+        case .long: SettingsStore.longMinutes = newValue
         }
         // 处于「待开始」且正是该阶段时，实时反映新时长
         if state == .ready && phase == changed {

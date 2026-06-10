@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Poco 是一个**常驻 macOS 菜单栏的极简番茄钟**，原生 Swift 实现（SwiftUI 内容 + AppKit 生命周期/托盘），**只做 macOS**，不再考虑跨平台。
 
-**当前状态**：Swift 原生版（`src/macOS/`）已实现全部功能：主窗口（倒计时/圆点/控制区/设置面板）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知、关窗隐藏不退出。重写设计见 [docs/2026-06-10-swift原生重写-design.md](docs/2026-06-10-swift原生重写-design.md)，产品/交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)。
+**当前状态**：Swift 原生版（`src/macOS/`）已实现全部功能：主窗口（倒计时/圆点/控制区/设置面板，自定义设计语言 + 呼吸/过渡动画）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知、关窗隐藏不退出。重写设计见 [docs/2026-06-10-swift原生重写-design.md](docs/2026-06-10-swift原生重写-design.md)，产品/交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)。
 
-**旧实现**：`src/Avalonia/` 是此前的 Avalonia(.NET) 版，暂留作功能对照，Swift 版验收后删除；不要再往里加功能。
+**历史**：项目最初用 Avalonia(.NET) 实现（git 历史中的 `src/Avalonia/`，已删除）；双主题色板与组件视觉规格源自该版的 `App.axaml` / `Styles/Poco.axaml`，现移植在 [Views/Theme.swift](src/macOS/Poco/Views/Theme.swift)。
 
 **尚未实现**：Dock 图标跳动 / 角标。
 
@@ -42,9 +42,10 @@ src/macOS/
       PomodoroLogic.swift    #   nextPhase / startsNewCycle（阶段推进规则，引擎只调用不内联）
       TrayTextFormat.swift   #   状态→菜单栏文本映射（Running=MM:SS，Paused=⏸ 前缀，其余 nil=图标态）
       SettingsStore.swift    #   UserDefaults 持久化（三时长 + isDark）
-    Views/                   # SwiftUI，原生控件与系统字体；阶段语义色（专注 .orange / 休息 .mint）作点缀
-      MainView.swift         #   主界面；isSettingsOpen 时整体切换为 SettingsView（同窗）
-      SettingsView.swift     #   主题分段控件 + 三个时长 Stepper + 恢复默认/退出
+    Views/                   # SwiftUI，自定义设计语言（不用系统控件默认样式）
+      Theme.swift            #   双主题色板（PocoTheme.light/.dark）+ 自定义 ButtonStyle（胶囊主按钮/幽灵圆钮/步进钮/文字链）
+      MainView.swift         #   主界面 + 呼吸动画（运行 4.5s / 结束 1.15s 脉动）；isSettingsOpen 时滑入 SettingsView（同窗）
+      SettingsView.swift     #   自定义分段主题切换 + 三个时长步进行 + 恢复默认/退出
     Tray/StatusItemController.swift   # NSStatusItem 单槽位：双击唤窗、右键菜单、单击不响应；订阅 engine.objectWillChange 刷新
     Notify/NotificationManager.swift  # UNUserNotificationCenter：阶段自然结束发横幅，点击唤窗
     Assets.xcassets          # AppIcon（tomato.png 各档）+ TrayTomato 托盘图

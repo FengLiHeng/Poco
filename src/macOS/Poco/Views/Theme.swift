@@ -51,24 +51,35 @@ extension Color {
 }
 
 // ============================================================
-// 控件样式（对应 Styles/Poco.axaml 的 btn-ghost / btn-primary / step-btn 等）
+// 控件样式（对应 Styles/Poco.axaml 的 btn-ghost / btn-primary / step-btn 等）。
+// 注意：悬停等瞬时状态放在 makeBody 返回的 View 里（@State 在 ButtonStyle
+// 本体上的存储行为无文档保证）。
 // ============================================================
 
 /// 幽灵圆钮（重置 / 跳过）：44pt 圆形，悬停加深
 struct GhostButtonStyle: ButtonStyle {
     let theme: PocoTheme
-    @State private var hovered = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 15, weight: .medium))
-            .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
-            .frame(width: 44, height: 44)
-            .background(Circle().fill(hovered ? theme.btnHover : theme.btn))
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-            .animation(.easeOut(duration: 0.15), value: hovered)
-            .onHover { hovered = $0 }
+        StyledBody(configuration: configuration, theme: theme)
+    }
+
+    private struct StyledBody: View {
+        let configuration: Configuration
+        let theme: PocoTheme
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(hovered ? theme.btnHover : theme.btn))
+                .scaleEffect(configuration.isPressed ? 0.94 : 1)
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+                .animation(.easeOut(duration: 0.15), value: hovered)
+                .onHover { hovered = $0 }
+        }
     }
 }
 
@@ -76,39 +87,58 @@ struct GhostButtonStyle: ButtonStyle {
 struct PrimaryButtonStyle: ButtonStyle {
     let theme: PocoTheme
     let accent: Color
-    @State private var hovered = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 15, weight: .semibold))
-            .kerning(0.9)
-            .foregroundStyle(theme.onAccent)
-            .frame(minWidth: 116)
-            .frame(height: 52)
-            .padding(.horizontal, 8)
-            .background(Capsule().fill(accent))
-            .opacity(configuration.isPressed ? 0.84 : (hovered ? 0.92 : 1))
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-            .animation(.easeOut(duration: 0.15), value: hovered)
-            .onHover { hovered = $0 }
+        StyledBody(configuration: configuration, theme: theme, accent: accent)
+    }
+
+    private struct StyledBody: View {
+        let configuration: Configuration
+        let theme: PocoTheme
+        let accent: Color
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 15, weight: .semibold))
+                .kerning(0.9)
+                .foregroundStyle(theme.onAccent)
+                .frame(minWidth: 116)
+                .frame(height: 52)
+                .padding(.horizontal, 8)
+                .background(Capsule().fill(accent))
+                .opacity(configuration.isPressed ? 0.84 : (hovered ? 0.92 : 1))
+                .scaleEffect(configuration.isPressed ? 0.97 : 1)
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+                .animation(.easeOut(duration: 0.15), value: hovered)
+                .onHover { hovered = $0 }
+        }
     }
 }
 
 /// 步进钮（− / +）：28pt 圆角 8
 struct StepButtonStyle: ButtonStyle {
     let theme: PocoTheme
-    @State private var hovered = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 16, weight: .medium))
-            .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
-            .frame(width: 28, height: 28)
-            .background(RoundedRectangle(cornerRadius: 8).fill(hovered ? theme.btnHover : theme.btn))
-            .scaleEffect(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
-            .onHover { hovered = $0 }
+        StyledBody(configuration: configuration, theme: theme)
+    }
+
+    private struct StyledBody: View {
+        let configuration: Configuration
+        let theme: PocoTheme
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
+                .frame(width: 28, height: 28)
+                .background(RoundedRectangle(cornerRadius: 8).fill(hovered ? theme.btnHover : theme.btn))
+                .scaleEffect(configuration.isPressed ? 0.92 : 1)
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+                .onHover { hovered = $0 }
+        }
     }
 }
 
@@ -116,13 +146,23 @@ struct StepButtonStyle: ButtonStyle {
 struct LinkButtonStyle: ButtonStyle {
     let normal: Color
     let hover: Color
-    @State private var hovered = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(hovered ? hover : normal)
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(.easeOut(duration: 0.15), value: hovered)
-            .onHover { hovered = $0 }
+        StyledBody(configuration: configuration, normal: normal, hover: hover)
+    }
+
+    private struct StyledBody: View {
+        let configuration: Configuration
+        let normal: Color
+        let hover: Color
+        @State private var hovered = false
+
+        var body: some View {
+            configuration.label
+                .foregroundStyle(hovered ? hover : normal)
+                .opacity(configuration.isPressed ? 0.7 : 1)
+                .animation(.easeOut(duration: 0.15), value: hovered)
+                .onHover { hovered = $0 }
+        }
     }
 }

@@ -43,17 +43,29 @@ final class StatusItemController: NSObject {
         refresh()
     }
 
+    // 上次写入的文本/提示：引擎每 250ms 广播一次，值没变就不动 NSStatusItem
+    private var lastText: String??
+    private var lastTooltip: String?
+
     /// text 为 nil → 图标态；否则 → 文本态（倒计时）。
     private func refresh() {
         guard let button = item?.button else { return }
-        if let text = engine.trayText {
-            button.image = nil
-            button.attributedTitle = NSAttributedString(string: text, attributes: [.font: font])
-        } else {
-            button.attributedTitle = NSAttributedString()
-            button.image = icon
+        let text = engine.trayText
+        if text != lastText {
+            lastText = text
+            if let text {
+                button.image = nil
+                button.attributedTitle = NSAttributedString(string: text, attributes: [.font: font])
+            } else {
+                button.attributedTitle = NSAttributedString()
+                button.image = icon
+            }
         }
-        button.toolTip = engine.trayTooltip
+        let tooltip = engine.trayTooltip
+        if tooltip != lastTooltip {
+            lastTooltip = tooltip
+            button.toolTip = tooltip
+        }
     }
 
     @objc private func clicked() {

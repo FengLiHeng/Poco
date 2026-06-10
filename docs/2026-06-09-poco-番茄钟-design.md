@@ -1,8 +1,8 @@
 # Poco · 番茄钟 产品设计文档
 
 > 日期：2026-06-09
-> 状态：设计已确认，待进入 UI 设计 / 实现规划
-> 技术栈：Avalonia（.NET 跨平台），首发 macOS
+> 状态：设计已确认并实现。产品规则仍然有效；技术栈已于 2026-06-10 从 Avalonia 迁移为原生 Swift（见 [2026-06-10-swift原生重写-design.md](2026-06-10-swift原生重写-design.md)），文中 Avalonia 相关表述仅作历史记录
+> 技术栈：~~Avalonia（.NET 跨平台），首发 macOS~~ → 原生 Swift（SwiftUI + AppKit），仅 macOS
 
 ---
 

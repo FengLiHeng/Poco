@@ -78,6 +78,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return false
     }
 
+    // macOS 14+ 要求显式声明，否则每次启动在控制台告警
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
+
     // Dock 图标点击（窗口已隐藏时）→ 唤出主窗口
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { showMainWindow() }
