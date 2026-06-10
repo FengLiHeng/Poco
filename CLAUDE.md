@@ -58,7 +58,7 @@ open bin/mac/Poco.app
 - **`ViewLocator.cs`**：约定式 View 解析——把 ViewModel 类型全名里的 `ViewModel` 替换为 `View` 来定位视图。新增的 `XxxViewModel`（继承 `ViewModelBase`）会自动匹配到 `Views/XxxView`。
 - `ViewModelBase` 继承 `ObservableObject`（CommunityToolkit.Mvvm）。可观察属性用 `[ObservableProperty]`、命令用 `[RelayCommand]`，依赖源生成器，类需声明为 `partial`。
 - **编译绑定默认开启**（`AvaloniaUseCompiledBindingsByDefault=true`）：XAML 中需通过 `x:DataType` 指定数据类型，否则绑定不生效。
-- 主题：`App.axaml` 用 `FluentTheme`，`RequestedThemeVariant="Default"`（跟随系统）。设计要求主窗口为**深色极简**风格。
+- 主题：`App.axaml` 用 `FluentTheme`，`RequestedThemeVariant="Light"`（默认浅色），用户可在设置切深色并持久化——详见下文「双主题 + 阶段语义色」。
 - 资源（字体、图标）放 `Assets/`，已通过 `<AvaloniaResource Include="Assets\**"/>` 打包。字体：`Assets/Fonts/` 内只有 **HarmonyOS Sans SC**（`HarmonyOS_SansSC_Regular.ttf` + `_Bold.ttf`，两个字重）。通过 [PocoFontCollection.cs](src/Poco/PocoFontCollection.cs) 注册为内嵌字体集合，XAML 里统一用 `fonts:Poco#HarmonyOS Sans SC` 引用（**不是** `avares://...#族名`，也没有 `MonoFont`/`CjkFont` 资源键）。倒计时数字的等宽对齐靠 `FontFeatures="+tnum"`（tabular numerals），并非单独的 JetBrains Mono 字体。样式中用到的 `Light`/`Medium`/`SemiBold` 字重由引擎从 Regular/Bold 合成（仓库未内置这些字重文件）。
 
 ### 双主题 + 阶段语义色（关键设计）
