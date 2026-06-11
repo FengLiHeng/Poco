@@ -150,7 +150,14 @@ final class PomodoroEngine: ObservableObject {
     }
 
     /// 重置：当前阶段回到满时长（待开始）。
-    func reset() { resetToPhase(phase, resetCycle: false) }
+    /// 若专注已自然走完并计了数，重置 = 重做同一轮，撤销那次计数，
+    /// 避免「重置后却跳到下一个圆点」的语义错位。
+    func reset() {
+        if state == .finished && phase == .focus && completedFocus > 0 {
+            completedFocus -= 1
+        }
+        resetToPhase(phase, resetCycle: false)
+    }
 
     /// 跳过：立即结束当前阶段，进入下一阶段的待开始态（不弹通知）。
     /// 注意：跳过专注**不计入**本组已完成数（只有自然走完才算一次专注），
@@ -200,9 +207,12 @@ final class PomodoroEngine: ObservableObject {
     var secondsText: String { String(format: "%02d", remainingSeconds % 60) }
 
     /// 当前阶段剩余比例（1=满 → 0=归零），驱动进度环。
+    /// 钳到 0...1：运行中改短当前阶段时长会让 remaining 暂时大于新总时长，
+    /// 不钳制会把 >1 传给环弧 trim，导致画错。
     var progress: Double {
         let total = phaseSeconds(phase)
-        return total > 0 ? Double(remainingSeconds) / Double(total) : 0
+        guard total > 0 else { return 0 }
+        return min(1, Double(remainingSeconds) / Double(total))
     }
 
     var isFocus: Bool { phase == .focus }

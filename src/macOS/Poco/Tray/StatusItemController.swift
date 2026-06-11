@@ -43,8 +43,9 @@ final class StatusItemController: NSObject {
         refresh()
     }
 
-    // 上次写入的文本/提示：引擎每 250ms 广播一次，值没变就不动 NSStatusItem
-    private var lastText: String??
+    // 上次写入的文本/提示：引擎每 250ms 广播一次，值没变就不动 NSStatusItem。
+    // lastText 为 nil 代表「图标态」——init() 已把按钮置为图标，故初值 nil 即与当前一致。
+    private var lastText: String?
     private var lastTooltip: String?
 
     /// text 为 nil → 图标态；否则 → 文本态（倒计时）。

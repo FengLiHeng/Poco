@@ -92,6 +92,15 @@ struct MainView: View {
         }
     }
 
+    /// 倒计时呼吸参数：运行中缓慢（4.5s），结束后较快脉动（1.15s）提示操作；其余不呼吸。
+    private var countdownBreath: BreathConfig? {
+        switch engine.state {
+        case .running: return BreathConfig(period: 4.5, minOpacity: 0.62)
+        case .finished: return BreathConfig(period: 1.15, minOpacity: 0.42)
+        default: return nil
+        }
+    }
+
     // ============================================================
     // 进度环：待开始满环 → 运行顺时针消减 → 结束归零；圆头弧 + 细刻度 + 径向光晕
     // ============================================================
@@ -120,7 +129,8 @@ struct MainView: View {
                 .stroke(accent, style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
                 .frame(width: Self.ringSize, height: Self.ringSize)
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 0.5), value: engine.progress)
+                // 时长对齐 1s 步进：下一次跳变恰好接上上一次动画，环弧连续扫过不走停
+                .animation(.linear(duration: 1), value: engine.progress)
 
             // 环心：阶段标签 + 倒计时 + 提示
             VStack(spacing: 10) {
@@ -134,8 +144,7 @@ struct MainView: View {
                     .font(.system(size: 48, weight: .light))
                     .monospacedDigit()
                     .foregroundStyle(countdownColor)
-                    .breathing(active: engine.state == .running, period: 4.5, minOpacity: 0.62)
-                    .breathing(active: engine.state == .finished, period: 1.15, minOpacity: 0.42)
+                    .breathing(countdownBreath)
 
                 // 提示行（已暂停 / 已结束；空态占位保持环心稳定）
                 Text(engine.hintText ?? " ")
@@ -163,7 +172,7 @@ struct MainView: View {
                 .fill(accent.opacity(0.16))
                 .frame(width: 16, height: 16)
                 .opacity(current ? 1 : 0)
-                .breathing(active: current && engine.state == .running, period: 4.5, minOpacity: 0.3)
+                .breathing(current && engine.state == .running ? BreathConfig(period: 4.5, minOpacity: 0.3) : nil)
             Circle()
                 .strokeBorder(on ? accent : theme.hairline, lineWidth: 1.5)
                 .background(Circle().fill(on ? accent : .clear))
@@ -208,19 +217,23 @@ private struct GearButton: View {
 }
 
 // ============================================================
-// 呼吸动画：用 TimelineView 按余弦曲线起伏透明度（对应 Avalonia 版 SineEaseInOut 关键帧）
+// 呼吸动画：用 TimelineView 按余弦曲线起伏透明度（对应 Avalonia 版 SineEaseInOut 关键帧）。
+// 传 nil 即不呼吸——把「是否呼吸 + 用哪套参数」收敛成一个可选配置，避免多个修饰器叠加。
 // ============================================================
-private struct BreathingModifier: ViewModifier {
-    let active: Bool
+struct BreathConfig {
     let period: Double
     let minOpacity: Double
+}
+
+private struct BreathingModifier: ViewModifier {
+    let config: BreathConfig?
 
     func body(content: Content) -> some View {
-        if active {
+        if let config {
             TimelineView(.animation) { context in
                 let t = context.date.timeIntervalSinceReferenceDate
-                let wave = 0.5 + 0.5 * cos(2 * .pi * t / period) // 1 → min → 1
-                content.opacity(minOpacity + (1 - minOpacity) * wave)
+                let wave = 0.5 + 0.5 * cos(2 * .pi * t / config.period) // 1 → min → 1
+                content.opacity(config.minOpacity + (1 - config.minOpacity) * wave)
             }
         } else {
             content
@@ -229,7 +242,7 @@ private struct BreathingModifier: ViewModifier {
 }
 
 extension View {
-    func breathing(active: Bool, period: Double, minOpacity: Double) -> some View {
-        modifier(BreathingModifier(active: active, period: period, minOpacity: minOpacity))
+    func breathing(_ config: BreathConfig?) -> some View {
+        modifier(BreathingModifier(config: config))
     }
 }
