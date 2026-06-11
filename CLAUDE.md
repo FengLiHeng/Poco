@@ -6,9 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Poco 是一个**常驻 macOS 菜单栏的极简番茄钟**，原生 Swift 实现（SwiftUI 内容 + AppKit 生命周期/托盘），**只做 macOS**，不再考虑跨平台。
 
-**当前状态**：Swift 原生版（`src/macOS/`）已实现全部功能：主窗口（倒计时/圆点/控制区/设置面板，自定义设计语言 + 呼吸/过渡动画）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知 + Dock 图标跳动、关窗隐藏不退出。重写设计见 [docs/2026-06-10-swift原生重写-design.md](docs/2026-06-10-swift原生重写-design.md)，产品/交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)。
-
-**历史**：项目最初用 Avalonia(.NET) 实现（git 历史中的 `src/Avalonia/`，已删除）；双主题色板与组件视觉规格源自该版的 `App.axaml` / `Styles/Poco.axaml`，现移植在 [Views/Theme.swift](src/macOS/Poco/Views/Theme.swift)。
+**功能**：主窗口（倒计时/进度环/圆点/控制区/设置面板，自定义设计语言 + 呼吸/过渡动画）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知 + Dock 图标跳动、关窗隐藏不退出。产品/交互设计见 [docs/poco-番茄钟-design.md](docs/poco-番茄钟-design.md)。
 
 ## 常用命令
 
