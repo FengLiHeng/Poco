@@ -15,9 +15,9 @@
 - 主窗口：真正的操作界面，承载完整交互。
 - 两者共享同一计时状态，**实时同步**。
 
-首发 macOS，但技术选型（Avalonia）保留跨平台路径，将来可上 Windows。
+只做 macOS，不考虑跨平台。
 
-非目标（明确不在 v1）：今日统计、任务标签、开机自启、声音提示、桌面浮窗形态。这些往后放，避免过度设计。（浅色主题原列为非目标，实现阶段已提前落地为浅/深双主题。）
+**产品哲学**：保持极简。不做任务管理、统计报表、云同步、桌面浮窗这类会侵蚀"菜单栏极简番茄钟"定位的功能——番茄钟的价值在克制，不在堆功能。
 
 ---
 
@@ -33,7 +33,7 @@
 | 退出应用 | 通过菜单栏右键菜单的「退出 Poco」 |
 | 状态同步 | 菜单栏文本与主窗口倒计时来自同一计时源，实时一致 |
 
-> 实现结论（macOS，2026-06-10）：Avalonia TrayIcon 不暴露 `NSStatusItem` 标题文本，已采用平台特定方案——原生 Swift dylib 实现单槽位 `NSStatusItem`（图标⇄文本切换），非 macOS 平台回退 Avalonia TrayIcon。详见 [2026-06-10-菜单栏倒计时文本-design.md](2026-06-10-菜单栏倒计时文本-design.md)。
+> 实现：原生 `NSStatusItem` 单槽位，图标⇄倒计时文本切换（`Tray/StatusItemController.swift`，状态→文本映射见 `Models/TrayTextFormat.swift`）。
 
 ---
 
@@ -102,7 +102,7 @@
 - **待开始（Idle/Ready）**：显示该阶段满时长，未走表。等待「开始」。
 - **运行（Running）**：倒计时递减；菜单栏同步。
 - **暂停（Paused）**：冻结当前剩余时间。
-- **结束（Finished）**：归零，触发提醒（系统通知；Dock 跳动暂未实现），停在该阶段，等待用户「开始」推进到下一阶段的待开始态。
+- **结束（Finished）**：归零，触发提醒（系统通知 + Dock 图标跳动），停在该阶段，等待用户「开始」推进到下一阶段的待开始态。
 
 按钮对状态的作用：
 - 开始/暂停：Ready/Paused → Running；Running → Paused
@@ -125,19 +125,13 @@
 - [x] 菜单栏常驻倒计时（甜点，单槽位图标⇄文本）+ 双击唤出主窗口 + 右键菜单
 - [x] 主窗口（纯数字极简，浅/深双主题默认浅色）
 - [x] 专注/短休/大休轮回，4 轮一大休
-- [x] 手动推进 + 系统通知（Dock 跳动尚未实现）
+- [x] 手动推进 + 系统通知 + Dock 图标跳动
 - [x] 开始 / 暂停 / 重置 / 跳过
 - [x] 自定义三个时长（设置）
 - [x] 关闭主窗口隐藏到菜单栏，菜单栏菜单可退出
 - [x] 浅/深双主题（默认浅色，设置内切换，持久化）
 
-**不包含（往后放）**
-- [ ] 今日统计 / 历史
-- [ ] 任务标签
-- [ ] 开机自启
-- [ ] 提示音
-- [ ] Dock 图标跳动 / 角标
-- [ ] 桌面浮窗形态、可置顶
+**有意不做**（见上文「产品哲学」）：任务管理 / 统计报表 / 云同步 / 桌面浮窗。
 
 ---
 
@@ -153,10 +147,10 @@
 
 ---
 
-## 11. 实现阶段注意（Avalonia）
+## 11. 实现现状（原生 Swift）
 
-- 写任何 Avalonia XAML / 控件 / 绑定 / 样式前，**先用 Context7 MCP 查官方 API 文档**（库 ID 通常为 `/avaloniaui/avalonia` 或 `/avaloniaui/avalonia-docs`），避免把 WPF 写法误用为 Avalonia。
-- 重点需先核实的 macOS 平台能力及核实结论（2026-06-10）：
-  - **TrayIcon 动态文本**：Avalonia 不支持 → 已用原生 Swift dylib 的单槽位 `NSStatusItem` 实现（图标⇄文本切换）；
-  - **原生通知**：已实现（`UNUserNotificationCenter`，需打包 `.app`；开发期回退 `osascript`）；
-  - **Dock 图标跳动 / 角标**：尚未实现。
+> 本节为历史结构文档，技术栈已于 2026-06-10 从 Avalonia 迁移为原生 Swift（SwiftUI + AppKit），下列能力均已落地。当前实现细节以 [CLAUDE.md](../CLAUDE.md) 与 [swift 原生重写设计](2026-06-10-swift原生重写-design.md) 为准。
+
+- **菜单栏动态文本**：原生 `NSStatusItem` 单槽位，图标⇄倒计时文本切换。
+- **原生通知**：`UNUserNotificationCenter`（Xcode/xcodebuild 构建的 `.app` 自带 bundle 身份，直接可用）。
+- **Dock 图标跳动**：阶段结束 `requestUserAttention(.criticalRequest)`，唤窗即撤销。

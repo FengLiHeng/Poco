@@ -17,3 +17,4 @@ obj/
 # Xcode
 xcuserdata/
 DerivedData/
+build/

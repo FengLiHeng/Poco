@@ -28,7 +28,8 @@ Poco 不再考虑跨平台，只做 macOS 桌面应用。将 `src/Avalonia/` 下
 src/macOS/
   Poco.xcodeproj/            # 现代格式工程 + 共享 scheme
   Poco/
-    PocoApp.swift            # @main SwiftUI App + AppDelegate（窗口隐藏式关闭、激活策略）
+    main.swift               # AppKit 入口
+    AppDelegate.swift        # 自建 NSWindow（窗口隐藏式关闭）、主菜单、托盘/通知挂载、Dock 跳动
     PomodoroEngine.swift     # @MainActor ObservableObject：单一计时源（对应原 MainWindowViewModel）
     Models/
       PocoModels.swift       # PocoPhase / TimerState 枚举
@@ -66,4 +67,4 @@ src/macOS/
 
 ## 范围外
 
-Dock 跳动/角标（原本就未实现）、Windows 支持、设置 JSON 迁移。
+Windows 支持、设置 JSON 迁移、角标计数（Dock 跳动后续已补，见 `AppDelegate`）。

@@ -6,11 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Poco 是一个**常驻 macOS 菜单栏的极简番茄钟**，原生 Swift 实现（SwiftUI 内容 + AppKit 生命周期/托盘），**只做 macOS**，不再考虑跨平台。
 
-**当前状态**：Swift 原生版（`src/macOS/`）已实现全部功能：主窗口（倒计时/圆点/控制区/设置面板，自定义设计语言 + 呼吸/过渡动画）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知、关窗隐藏不退出。重写设计见 [docs/2026-06-10-swift原生重写-design.md](docs/2026-06-10-swift原生重写-design.md)，产品/交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)。
+**当前状态**：Swift 原生版（`src/macOS/`）已实现全部功能：主窗口（倒计时/圆点/控制区/设置面板，自定义设计语言 + 呼吸/过渡动画）、浅深双主题手动切换、菜单栏单槽位托盘（图标⇄倒计时文本）、阶段结束系统通知 + Dock 图标跳动、关窗隐藏不退出。重写设计见 [docs/2026-06-10-swift原生重写-design.md](docs/2026-06-10-swift原生重写-design.md)，产品/交互设计见 [docs/2026-06-09-poco-番茄钟-design.md](docs/2026-06-09-poco-番茄钟-design.md)。
 
 **历史**：项目最初用 Avalonia(.NET) 实现（git 历史中的 `src/Avalonia/`，已删除）；双主题色板与组件视觉规格源自该版的 `App.axaml` / `Styles/Poco.axaml`，现移植在 [Views/Theme.swift](src/macOS/Poco/Views/Theme.swift)。
-
-**尚未实现**：Dock 图标跳动 / 角标。
 
 ## 常用命令
 
@@ -49,6 +47,7 @@ src/macOS/
       SettingsView.swift     #   自定义分段主题切换 + 三个时长步进行 + 恢复默认/退出
     Tray/StatusItemController.swift   # NSStatusItem 单槽位：双击唤窗、右键菜单、单击不响应；订阅 engine.objectWillChange 刷新
     Notify/NotificationManager.swift  # UNUserNotificationCenter：阶段自然结束发横幅，点击唤窗
+                                      # （Dock 图标跳动在 AppDelegate：阶段结束 requestUserAttention(.criticalRequest)，唤窗即撤销）
     Assets.xcassets          # AppIcon（tomato.png 各档）+ TrayTomato 托盘图
   PocoTests/                 # Swift Testing（@Test/#expect），宿主为 Poco.app；
                              # AppDelegate 检测 XCTest 环境变量时跳过托盘/通知初始化
