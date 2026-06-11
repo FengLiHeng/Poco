@@ -10,7 +10,11 @@ final class PomodoroEngine: ObservableObject {
 
     // —— 核心状态 ——
     @Published private(set) var phase: PocoPhase = .focus
-    @Published private(set) var state: TimerState = .ready
+    @Published private(set) var state: TimerState = .ready {
+        didSet {
+            if oldValue == .finished && state != .finished { onLeftFinished?() }
+        }
+    }
     @Published private(set) var remainingSeconds = 0
     @Published var isSettingsOpen = false
 
@@ -30,8 +34,11 @@ final class PomodoroEngine: ObservableObject {
         }
     }
 
-    /// 阶段自然结束时触发（系统通知挂载点；跳过不触发）。
+    /// 阶段自然结束时触发（系统通知 / Dock 跳动挂载点；跳过不触发）。
     var onPhaseFinished: ((PocoPhase) -> Void)?
+
+    /// 离开 Finished 态时触发（用户开始下一阶段 → 撤销 Dock 跳动）。
+    var onLeftFinished: (() -> Void)?
 
     // 运行中阶段的目标结束时刻（墙钟）。计时以它为准，tick 仅用于刷新显示，
     // 避免 Timer 间隔抖动与系统睡眠造成的累积漂移。

@@ -9,6 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
     private var tray: StatusItemController?
     private var notifier: NotificationManager?
+    // 阶段结束时发起的「持续跳 Dock」请求 id；唤窗/进入下一阶段时撤销
+    private var attentionRequest: Int?
 
     /// 单元测试以本 app 为宿主运行时，不挂托盘/不请求通知授权
     private var isRunningTests: Bool {
@@ -24,10 +26,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         tray = StatusItemController(engine: engine) { [weak self] in self?.showMainWindow() }
         notifier = NotificationManager { [weak self] in self?.showMainWindow() }
-        // 阶段自然结束 → 系统通知（跳过不触发）
+        // 阶段自然结束 → 系统通知 + Dock 跳动（跳过不触发）
         engine.onPhaseFinished = { [weak self] finished in
             self?.notifier?.postPhaseFinished(finished)
+            self?.startDockBounce()
         }
+        // 用户开始下一阶段（离开 Finished 态）→ 停止 Dock 跳动
+        engine.onLeftFinished = { [weak self] in self?.stopDockBounce() }
         showMainWindow()
     }
 
@@ -88,7 +93,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func showMainWindow() {
+        stopDockBounce() // 用户已注意到（唤窗即视为确认）
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    // ============================================================
+    // Dock 图标跳动：阶段结束时持续跳（criticalRequest，跳到 app 被激活或显式撤销）。
+    // Poco 自身在前台时系统不会跳（用户正看着，无需提醒）。
+    // ============================================================
+    private func startDockBounce() {
+        stopDockBounce()
+        attentionRequest = NSApp.requestUserAttention(.criticalRequest)
+    }
+
+    private func stopDockBounce() {
+        if let id = attentionRequest {
+            NSApp.cancelUserAttentionRequest(id)
+            attentionRequest = nil
+        }
     }
 }
