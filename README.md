@@ -6,6 +6,43 @@
 
 ---
 
+## 截图
+
+<table>
+  <tr>
+    <td align="center"><b>菜单栏 · 未运行</b></td>
+    <td align="center"><b>菜单栏 · 运行中</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/截图/菜单栏-未运行.png" width="240"/></td>
+    <td><img src="docs/截图/菜单栏-运行中.png" width="240"/></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><b>主窗口 · 浅色</b></td>
+    <td align="center"><b>主窗口 · 深色</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/截图/浅色-首页.png" width="280"/></td>
+    <td><img src="docs/截图/深色-首页.png" width="280"/></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><b>设置 · 浅色</b></td>
+    <td align="center"><b>设置 · 深色</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/截图/浅色-设置页.png" width="280"/></td>
+    <td><img src="docs/截图/深色-设置页.png" width="280"/></td>
+  </tr>
+</table>
+
+---
+
 ## 功能
 
 - **菜单栏常驻**：未运行时显示番茄图标，运行时显示 `MM:SS` 倒计时，暂停时显示 `⏸ MM:SS`
