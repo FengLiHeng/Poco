@@ -5,6 +5,8 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    private static let showMainWindowNotification = Notification.Name("com.poco.pomodoro.showMainWindow")
+
     let engine = PomodoroEngine()
     private var window: NSWindow?
     private var tray: StatusItemController?
@@ -19,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard !exitIfAnotherPocoIsRunning() else { return }
+        registerSingleInstanceWakeup()
+
         engine.applyTheme() // 按持久化设置应用主题（默认浅色）
         setupMainMenu()
         setupWindow()
@@ -33,6 +38,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         // 用户开始下一阶段（离开 Finished 态）→ 停止 Dock 跳动
         engine.onLeftFinished = { [weak self] in self?.stopDockBounce() }
+        showMainWindow()
+    }
+
+    // 通知横幅点击有时会经 LaunchServices 再打开一次 app（尤其是调试/DerivedData 路径）。
+    // 新进程只负责通知已运行实例唤窗，然后立刻退出，避免 Dock 出现两个 Poco。
+    private func exitIfAnotherPocoIsRunning() -> Bool {
+        guard !isRunningTests, let bundleID = Bundle.main.bundleIdentifier else { return false }
+        let currentPID = ProcessInfo.processInfo.processIdentifier
+        let runningPocos = NSWorkspace.shared.runningApplications
+            .filter { $0.bundleIdentifier == bundleID && $0.processIdentifier != currentPID }
+            .sorted { ($0.launchDate ?? .distantFuture) < ($1.launchDate ?? .distantFuture) }
+
+        guard let existingApp = runningPocos.first else { return false }
+        DistributedNotificationCenter.default().post(name: Self.showMainWindowNotification, object: nil)
+        existingApp.activate(options: [.activateAllWindows])
+        NSApp.terminate(nil)
+        return true
+    }
+
+    private func registerSingleInstanceWakeup() {
+        guard !isRunningTests else { return }
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(handleShowMainWindowNotification(_:)),
+            name: Self.showMainWindowNotification,
+            object: nil,
+            suspensionBehavior: .deliverImmediately)
+    }
+
+    @objc private func handleShowMainWindowNotification(_ notification: Notification) {
         showMainWindow()
     }
 
