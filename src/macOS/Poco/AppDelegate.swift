@@ -31,10 +31,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         tray = StatusItemController(engine: engine) { [weak self] in self?.showMainWindow() }
         notifier = NotificationManager { [weak self] in self?.showMainWindow() }
-        // 阶段自然结束 → 系统通知 + Dock 跳动（跳过不触发）
+        // 阶段自然结束 → 仅在 Poco 失去焦点时发系统通知 + Dock 跳动（跳过不触发）。
         engine.onPhaseFinished = { [weak self] finished in
-            self?.notifier?.postPhaseFinished(finished)
-            self?.startDockBounce()
+            guard let self, shouldAlertWhenPhaseFinished else { return }
+            notifier?.postPhaseFinished(finished)
+            startDockBounce()
         }
         // 用户开始下一阶段（离开 Finished 态）→ 停止 Dock 跳动
         engine.onLeftFinished = { [weak self] in self?.stopDockBounce() }
@@ -133,9 +134,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    private var shouldAlertWhenPhaseFinished: Bool {
+        !NSApp.isActive
+    }
+
     // ============================================================
-    // Dock 图标跳动：阶段结束时持续跳（criticalRequest，跳到 app 被激活或显式撤销）。
-    // Poco 自身在前台时系统不会跳（用户正看着，无需提醒）。
+    // Dock 图标跳动：阶段结束且 Poco 不在前台时持续跳
+    //（criticalRequest，跳到 app 被激活或显式撤销）。
     // ============================================================
     private func startDockBounce() {
         stopDockBounce()

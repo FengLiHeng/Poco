@@ -1,5 +1,7 @@
 // 系统原生通知（逻辑沿用 Avalonia 版 native/PocoNotify.swift，不再需要 dylib）：
-// 阶段自然结束 → 横幅通知（声音 + 时效性级别，尽量穿透专注模式）；点击通知 → 唤出主窗口。
+// 阶段自然结束且 Poco 不在前台 → 横幅通知（声音 + 时效性级别，尽量穿透专注模式）；
+// 点击通知 → 唤出主窗口。
+import AppKit
 import Foundation
 import UserNotifications
 
@@ -26,10 +28,11 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(req)
     }
 
-    // 应用在前台时也显示横幅 + 声音
+    // 前台展示兜底：用户已切回 Poco 时不再弹横幅/响铃。
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        let isAppActive = await MainActor.run { NSApp.isActive }
+        return isAppActive ? [] : [.banner, .list, .sound]
     }
 
     // 用户点击通知 → 唤出主窗口
