@@ -15,16 +15,17 @@ Poco 是一个**常驻 macOS 菜单栏的极简番茄钟**，原生 Swift 实现
 ```bash
 cd src/macOS
 xcodebuild -project Poco.xcodeproj -scheme Poco -configuration Debug build   # 构建
+xcodebuild -project Poco.xcodeproj -scheme Poco -configuration Release build # 构建发布产物
 xcodebuild -project Poco.xcodeproj -scheme Poco test                         # 运行单测（Swift Testing）
 open ~/Library/Developer/Xcode/DerivedData/Poco-*/Build/Products/Debug/Poco.app  # 运行
 ```
 
-构建成功并需要交付本地可运行产物时，必须把最新 `.app` 同步到仓库根目录 `build/Poco.app`，供用户直接打开（下面命令从 `src/macOS` 执行）：
+构建成功并需要交付本地可运行产物时，仓库根目录 `build/Poco.app` **永远只复制 Release 产物**，不要复制 Debug 产物。下面命令从 `src/macOS` 执行：
 
 ```bash
-APP="$(ls -dt "$HOME"/Library/Developer/Xcode/DerivedData/Poco-*/Build/Products/Debug/Poco.app 2>/dev/null | head -n 1)"
+APP="$(ls -dt "$HOME"/Library/Developer/Xcode/DerivedData/Poco-*/Build/Products/Release/Poco.app 2>/dev/null | head -n 1)"
 if [ ! -d "$APP" ]; then
-  echo "未找到 Debug Poco.app，请先运行 xcodebuild 构建"
+  echo "未找到 Release Poco.app，请先运行 xcodebuild -configuration Release build"
   exit 1
 fi
 rsync -a --delete "$APP"/ ../../build/Poco.app/
