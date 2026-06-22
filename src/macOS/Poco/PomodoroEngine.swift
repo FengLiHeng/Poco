@@ -44,6 +44,7 @@ final class PomodoroEngine: ObservableObject {
     // 避免 Timer 间隔抖动与系统睡眠造成的累积漂移。
     private var endAt = Date.distantPast
     private var timer: Timer?
+    private var phaseTotalSeconds = 0
 
     init() {
         focusMinutes = SettingsStore.focusMinutes
@@ -114,7 +115,8 @@ final class PomodoroEngine: ObservableObject {
         stopTimer()
         if resetCycle { completedFocus = 0 }
         self.phase = phase
-        remainingSeconds = phaseSeconds(phase)
+        phaseTotalSeconds = phaseSeconds(phase)
+        remainingSeconds = phaseTotalSeconds
         state = .ready
     }
 
@@ -188,7 +190,8 @@ final class PomodoroEngine: ObservableObject {
         }
         // 处于「待开始」且正是该阶段时，实时反映新时长
         if state == .ready && phase == changed {
-            remainingSeconds = phaseSeconds(changed)
+            phaseTotalSeconds = phaseSeconds(changed)
+            remainingSeconds = phaseTotalSeconds
         }
     }
 
@@ -207,10 +210,9 @@ final class PomodoroEngine: ObservableObject {
     var secondsText: String { String(format: "%02d", remainingSeconds % 60) }
 
     /// 当前阶段剩余比例（1=满 → 0=归零），驱动进度环。
-    /// 钳到 0...1：运行中改短当前阶段时长会让 remaining 暂时大于新总时长，
-    /// 不钳制会把 >1 传给环弧 trim，导致画错。
+    /// 使用进入本阶段时的总时长快照，避免运行/暂停中修改设置影响当前计时显示。
     var progress: Double {
-        let total = phaseSeconds(phase)
+        let total = phaseTotalSeconds
         guard total > 0 else { return 0 }
         return min(1, Double(remainingSeconds) / Double(total))
     }
