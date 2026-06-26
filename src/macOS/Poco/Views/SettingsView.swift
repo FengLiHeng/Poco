@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject var engine: PomodoroEngine
 
     private var theme: PocoTheme { engine.isDarkTheme ? .dark : .light }
@@ -95,8 +96,10 @@ struct SettingsView: View {
                 .padding(.horizontal, 13)
                 .padding(.vertical, 5)
                 .background(RoundedRectangle(cornerRadius: 7).fill(isActive ? theme.surface : .clear))
+                .contentShape(RoundedRectangle(cornerRadius: 7))
         }
         .buttonStyle(.plain)
+        .accessibilityValue(isActive ? "已选择" : "未选择")
     }
 
     private func durationRow(_ name: String, dotColor: Color, value: Binding<Int>) -> some View {
@@ -108,9 +111,10 @@ struct SettingsView: View {
             Spacer()
 
             HStack(spacing: 4) {
-                Button { value.wrappedValue = max(1, value.wrappedValue - 1) } label: {
-                    Image(systemName: "minus")
+                Button("减少\(name)", systemImage: "minus") {
+                    value.wrappedValue = max(1, value.wrappedValue - 1)
                 }
+                .labelStyle(.iconOnly)
                 .buttonStyle(StepButtonStyle(theme: theme))
 
                 HStack(alignment: .lastTextBaseline, spacing: 1) {
@@ -118,8 +122,8 @@ struct SettingsView: View {
                         .font(SettingsType.value)
                         .monospacedDigit()
                         .foregroundStyle(theme.ink)
-                        .contentTransition(.numericText(value: Double(value.wrappedValue)))
-                        .animation(.snappy(duration: 0.25), value: value.wrappedValue)
+                        .contentTransition(valueTransition(for: value.wrappedValue))
+                        .animation(valueAnimation, value: value.wrappedValue)
                     Text("分")
                         .font(SettingsType.unit)
                         .foregroundStyle(theme.inkFaint)
@@ -127,13 +131,22 @@ struct SettingsView: View {
                 }
                 .frame(width: 52)
 
-                Button { value.wrappedValue = min(60, value.wrappedValue + 1) } label: {
-                    Image(systemName: "plus")
+                Button("增加\(name)", systemImage: "plus") {
+                    value.wrappedValue = min(60, value.wrappedValue + 1)
                 }
+                .labelStyle(.iconOnly)
                 .buttonStyle(StepButtonStyle(theme: theme))
             }
         }
         .padding(.vertical, 16)
+    }
+
+    private func valueTransition(for value: Int) -> ContentTransition {
+        reduceMotion ? .identity : .numericText(value: Double(value))
+    }
+
+    private var valueAnimation: Animation {
+        reduceMotion ? .easeOut(duration: 0.01) : .snappy(duration: 0.25)
     }
 
     private var footer: some View {

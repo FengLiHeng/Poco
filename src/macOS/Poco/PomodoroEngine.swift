@@ -78,8 +78,11 @@ final class PomodoroEngine: ObservableObject {
     }
 
     private func tick() {
-        remainingSeconds = remainingFromClock()
-        if remainingSeconds <= 0 {
+        let nextRemaining = remainingFromClock()
+        if nextRemaining != remainingSeconds {
+            remainingSeconds = nextRemaining
+        }
+        if nextRemaining <= 0 {
             stopTimer()
             if phase == .focus {
                 completedFocus = min(completedFocus + 1, Self.focusPerCycle)

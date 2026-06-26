@@ -3,11 +3,25 @@
 import SwiftUI
 
 struct MainView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject var engine: PomodoroEngine
 
     private var theme: PocoTheme { engine.isDarkTheme ? .dark : .light }
     private var accent: Color { theme.accent(isFocus: engine.isFocus) }
     private var accentInk: Color { theme.accentInk(isFocus: engine.isFocus) }
+    private var settingsTransition: AnyTransition {
+        reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity)
+    }
+    private var settingsAnimation: Animation {
+        reduceMotion ? .easeOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.9)
+    }
+    private var phaseAnimation: Animation {
+        .easeInOut(duration: reduceMotion ? 0.12 : 0.45)
+    }
+    private var progressAnimation: Animation {
+        if reduceMotion { return .easeOut(duration: 0.12) }
+        return engine.state == .running ? .linear(duration: 1) : .easeOut(duration: 0.22)
+    }
 
     var body: some View {
         ZStack {
@@ -18,12 +32,12 @@ struct MainView: View {
 
             if engine.isSettingsOpen {
                 SettingsView()
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(settingsTransition)
             }
         }
         .frame(width: 324, height: 416)
-        .animation(.spring(response: 0.35, dampingFraction: 0.9), value: engine.isSettingsOpen)
-        .animation(.easeInOut(duration: 0.45), value: engine.isFocus)
+        .animation(settingsAnimation, value: engine.isSettingsOpen)
+        .animation(phaseAnimation, value: engine.isFocus)
     }
 
     private var timerView: some View {
@@ -52,9 +66,8 @@ struct MainView: View {
                 // 控制区
                 HStack(alignment: .top, spacing: 14) {
                     labeledControl("重置") {
-                        Button { engine.reset() } label: {
-                            Image(systemName: "arrow.counterclockwise")
-                        }
+                        Button("重置", systemImage: "arrow.counterclockwise", action: engine.reset)
+                            .labelStyle(.iconOnly)
                         .buttonStyle(GhostButtonStyle(theme: theme))
                     }
 
@@ -70,9 +83,8 @@ struct MainView: View {
                     }
 
                     labeledControl("跳过") {
-                        Button { engine.skip() } label: {
-                            Image(systemName: "forward.end")
-                        }
+                        Button("跳过", systemImage: "forward.end", action: engine.skip)
+                            .labelStyle(.iconOnly)
                         .buttonStyle(GhostButtonStyle(theme: theme))
                     }
                 }
@@ -129,8 +141,8 @@ struct MainView: View {
                 .stroke(accent, style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
                 .frame(width: Self.ringSize, height: Self.ringSize)
                 .rotationEffect(.degrees(-90))
-                // 时长对齐 1s 步进：下一次跳变恰好接上上一次动画，环弧连续扫过不走停
-                .animation(.linear(duration: 1), value: engine.progress)
+                // 运行中对齐 1s 步进；暂停/重置/跳过等离散变化使用更短过渡。
+                .animation(progressAnimation, value: engine.progress)
 
             // 环心：阶段标签 + 倒计时 + 提示
             VStack(spacing: 10) {
@@ -203,11 +215,13 @@ private struct GearButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "gearshape")
+            Label("设置", systemImage: "gearshape")
+                .labelStyle(.iconOnly)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(hovered ? theme.inkSoft : theme.inkFaint)
                 .frame(width: 24, height: 24)
                 .background(RoundedRectangle(cornerRadius: 7).fill(hovered ? theme.btn : .clear))
+                .contentShape(RoundedRectangle(cornerRadius: 7))
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.15), value: hovered)
@@ -226,10 +240,11 @@ struct BreathConfig {
 }
 
 private struct BreathingModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let config: BreathConfig?
 
     func body(content: Content) -> some View {
-        if let config {
+        if let config, !reduceMotion {
             TimelineView(.animation) { context in
                 let t = context.date.timeIntervalSinceReferenceDate
                 let wave = 0.5 + 0.5 * cos(2 * .pi * t / config.period) // 1 → min → 1

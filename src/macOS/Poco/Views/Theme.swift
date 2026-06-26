@@ -66,9 +66,14 @@ struct GhostButtonStyle: ButtonStyle {
     }
 
     private struct StyledBody: View {
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
         let configuration: Configuration
         let theme: PocoTheme
         @State private var hovered = false
+
+        private var pressedScale: CGFloat {
+            reduceMotion ? 1 : (configuration.isPressed ? 0.94 : 1)
+        }
 
         var body: some View {
             configuration.label
@@ -76,7 +81,7 @@ struct GhostButtonStyle: ButtonStyle {
                 .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
                 .frame(width: 44, height: 44)
                 .background(Circle().fill(hovered ? theme.btnHover : theme.btn))
-                .scaleEffect(configuration.isPressed ? 0.94 : 1)
+                .scaleEffect(pressedScale)
                 .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
                 .animation(.easeOut(duration: 0.15), value: hovered)
                 .onHover { hovered = $0 }
@@ -94,10 +99,15 @@ struct PrimaryButtonStyle: ButtonStyle {
     }
 
     private struct StyledBody: View {
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
         let configuration: Configuration
         let theme: PocoTheme
         let accent: Color
         @State private var hovered = false
+
+        private var pressedScale: CGFloat {
+            reduceMotion ? 1 : (configuration.isPressed ? 0.97 : 1)
+        }
 
         var body: some View {
             configuration.label
@@ -109,7 +119,7 @@ struct PrimaryButtonStyle: ButtonStyle {
                 .padding(.horizontal, 8)
                 .background(Capsule().fill(accent))
                 .opacity(configuration.isPressed ? 0.84 : (hovered ? 0.92 : 1))
-                .scaleEffect(configuration.isPressed ? 0.97 : 1)
+                .scaleEffect(pressedScale)
                 .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
                 .animation(.easeOut(duration: 0.15), value: hovered)
                 .onHover { hovered = $0 }
@@ -126,9 +136,14 @@ struct StepButtonStyle: ButtonStyle {
     }
 
     private struct StyledBody: View {
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
         let configuration: Configuration
         let theme: PocoTheme
         @State private var hovered = false
+
+        private var pressedScale: CGFloat {
+            reduceMotion ? 1 : (configuration.isPressed ? 0.92 : 1)
+        }
 
         var body: some View {
             configuration.label
@@ -136,7 +151,7 @@ struct StepButtonStyle: ButtonStyle {
                 .foregroundStyle(hovered ? theme.ink : theme.inkSoft)
                 .frame(width: 28, height: 28)
                 .background(RoundedRectangle(cornerRadius: 8).fill(hovered ? theme.btnHover : theme.btn))
-                .scaleEffect(configuration.isPressed ? 0.92 : 1)
+                .scaleEffect(pressedScale)
                 .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
                 .onHover { hovered = $0 }
         }
