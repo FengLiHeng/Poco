@@ -29,6 +29,8 @@ struct MainView: View {
 
             timerView
                 .opacity(engine.isSettingsOpen ? 0 : 1)
+                .allowsHitTesting(!engine.isSettingsOpen)
+                .accessibilityHidden(engine.isSettingsOpen)
 
             if engine.isSettingsOpen {
                 SettingsView()
