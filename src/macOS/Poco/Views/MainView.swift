@@ -1,33 +1,25 @@
-// 主窗口：倒计时 + 轮次圆点 + 控制区；设置打开时滑入设置面板。
-// 视觉规格移植自设计稿（Styles/Poco.axaml）：自定义色板 + 阶段语义色 + 呼吸动画。
+// 主窗口容器：在计时页与同窗设置页之间切换。
 import SwiftUI
 
 struct MainView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @EnvironmentObject var engine: PomodoroEngine
+    @EnvironmentObject private var engine: PomodoroEngine
 
     private var theme: PocoTheme { engine.isDarkTheme ? .dark : .light }
-    private var accent: Color { theme.accent(isFocus: engine.isFocus) }
-    private var accentInk: Color { theme.accentInk(isFocus: engine.isFocus) }
+
     private var settingsTransition: AnyTransition {
         reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity)
     }
+
     private var settingsAnimation: Animation {
         reduceMotion ? .easeOut(duration: 0.18) : .spring(response: 0.35, dampingFraction: 0.9)
-    }
-    private var phaseAnimation: Animation {
-        .easeInOut(duration: reduceMotion ? 0.12 : 0.45)
-    }
-    private var progressAnimation: Animation {
-        if reduceMotion { return .easeOut(duration: 0.12) }
-        return engine.state == .running ? .linear(duration: 1) : .easeOut(duration: 0.22)
     }
 
     var body: some View {
         ZStack {
             theme.bg.ignoresSafeArea()
 
-            timerView
+            TimerView()
                 .opacity(engine.isSettingsOpen ? 0 : 1)
                 .allowsHitTesting(!engine.isSettingsOpen)
                 .accessibilityHidden(engine.isSettingsOpen)
@@ -37,229 +29,13 @@ struct MainView: View {
                     .transition(settingsTransition)
             }
         }
-        .frame(width: 324, height: 416)
+        .frame(
+            minWidth: PocoMetrics.windowMinWidth,
+            idealWidth: PocoMetrics.windowIdealWidth,
+            minHeight: PocoMetrics.windowMinHeight,
+            idealHeight: PocoMetrics.windowIdealHeight
+        )
         .animation(settingsAnimation, value: engine.isSettingsOpen)
-        .animation(phaseAnimation, value: engine.isFocus)
-    }
-
-    private var timerView: some View {
-        VStack(spacing: 0) {
-            // 顶栏：齿轮（与左上角交通灯同一行）
-            HStack {
-                Spacer()
-                GearButton(theme: theme) { engine.isSettingsOpen = true }
-            }
-            .padding(.top, 10)
-            .padding(.trailing, 14)
-
-            Spacer()
-
-            VStack(spacing: 20) {
-                // 进度环仪器：轨道 + 语义色进度弧，阶段/数字/提示收在环内
-                ring
-
-                // 轮次圆点
-                HStack(spacing: 11) {
-                    ForEach(0..<PomodoroEngine.focusPerCycle, id: \.self) { i in
-                        dot(index: i)
-                    }
-                }
-
-                // 控制区
-                HStack(alignment: .top, spacing: 14) {
-                    labeledControl("重置") {
-                        Button("重置", systemImage: "arrow.counterclockwise", action: engine.reset)
-                            .labelStyle(.iconOnly)
-                        .buttonStyle(GhostButtonStyle(theme: theme))
-                    }
-
-                    VStack(spacing: 7) {
-                        Button { engine.primaryAction() } label: {
-                            HStack(spacing: 9) {
-                                Image(systemName: engine.state == .running ? "pause.fill" : "play.fill")
-                                    .font(.system(size: 13, weight: .bold))
-                                Text(engine.primaryLabel)
-                            }
-                        }
-                        .buttonStyle(PrimaryButtonStyle(theme: theme, accent: accent))
-                    }
-
-                    labeledControl("跳过") {
-                        Button("跳过", systemImage: "forward.end", action: engine.skip)
-                            .labelStyle(.iconOnly)
-                        .buttonStyle(GhostButtonStyle(theme: theme))
-                    }
-                }
-                .padding(.top, 2)
-            }
-
-            Spacer()
-            Spacer().frame(height: 26)
-        }
-    }
-
-    private var countdownColor: Color {
-        switch engine.state {
-        case .paused: return theme.inkFaint
-        case .finished: return accent
-        default: return theme.ink
-        }
-    }
-
-    /// 倒计时呼吸参数：运行中缓慢（4.5s），结束后较快脉动（1.15s）提示操作；其余不呼吸。
-    private var countdownBreath: BreathConfig? {
-        switch engine.state {
-        case .running: return BreathConfig(period: 4.5, minOpacity: 0.62)
-        case .finished: return BreathConfig(period: 1.15, minOpacity: 0.42)
-        default: return nil
-        }
-    }
-
-    // ============================================================
-    // 进度环：待开始满环 → 运行顺时针消减 → 结束归零；圆头弧 + 细刻度 + 径向光晕
-    // ============================================================
-    private static let ringSize: CGFloat = 220
-    private static let ringWidth: CGFloat = 6
-
-    private var ring: some View {
-        ZStack {
-            // 12 个细刻度（贴轨道内侧）
-            ForEach(0..<12, id: \.self) { i in
-                Capsule()
-                    .fill(theme.hairline)
-                    .frame(width: 1.5, height: 4)
-                    .offset(y: -(Self.ringSize / 2 - Self.ringWidth - 8))
-                    .rotationEffect(.degrees(Double(i) * 30))
-            }
-
-            // 轨道（显式定尺寸，避免被 ZStack 提案撑大）
-            Circle()
-                .stroke(theme.btn, lineWidth: Self.ringWidth)
-                .frame(width: Self.ringSize, height: Self.ringSize)
-
-            // 进度弧（从 12 点起顺时针，剩余比例）
-            Circle()
-                .trim(from: 0, to: engine.progress)
-                .stroke(accent, style: StrokeStyle(lineWidth: Self.ringWidth, lineCap: .round))
-                .frame(width: Self.ringSize, height: Self.ringSize)
-                .rotationEffect(.degrees(-90))
-                // 运行中对齐 1s 步进；暂停/重置/跳过等离散变化使用更短过渡。
-                .animation(progressAnimation, value: engine.progress)
-
-            // 环心：阶段标签 + 倒计时 + 提示
-            VStack(spacing: 10) {
-                Text(engine.phaseCjk)
-                    .font(.system(size: 13, weight: .semibold))
-                    .kerning(4)
-                    .foregroundStyle(accentInk)
-
-                // 倒计时（运行中缓慢呼吸；结束后较快脉动提示操作）
-                Text("\(engine.minutesText):\(engine.secondsText)")
-                    .font(.system(size: 48, weight: .light))
-                    .monospacedDigit()
-                    .foregroundStyle(countdownColor)
-                    .breathing(countdownBreath)
-
-                // 提示行（已暂停 / 已结束；空态占位保持环心稳定）
-                Text(engine.hintText ?? " ")
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(engine.state == .finished ? accentInk : theme.inkSoft)
-                    .opacity(engine.hintText == nil ? 0 : 1)
-            }
-        }
-        .frame(width: Self.ringSize, height: Self.ringSize)
-        // 氛围光晕：极淡的语义色径向渐变，给仪器一点纵深（background 不参与布局）
-        .background(
-            Circle()
-                .fill(RadialGradient(
-                    colors: [accent.opacity(0.08), accent.opacity(0)],
-                    center: .center, startRadius: 10, endRadius: Self.ringSize * 0.62))
-                .frame(width: Self.ringSize * 1.3, height: Self.ringSize * 1.3))
-    }
-
-    private func dot(index: Int) -> some View {
-        let on = index < engine.completedFocus || index == engine.currentDotIndex
-        let current = index == engine.currentDotIndex
-        return ZStack {
-            // 当前轮光晕（运行中随呼吸起伏）
-            Circle()
-                .fill(accent.opacity(0.16))
-                .frame(width: 16, height: 16)
-                .opacity(current ? 1 : 0)
-                .breathing(current && engine.state == .running ? BreathConfig(period: 4.5, minOpacity: 0.3) : nil)
-            Circle()
-                .strokeBorder(on ? accent : theme.hairline, lineWidth: 1.5)
-                .background(Circle().fill(on ? accent : .clear))
-                .frame(width: 8, height: 8)
-        }
-        .frame(width: 16, height: 16)
-        .animation(.easeOut(duration: 0.3), value: on)
-        .animation(.easeOut(duration: 0.3), value: current)
-    }
-
-    private func labeledControl(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(spacing: 7) {
-            content()
-            Text(title)
-                .font(.system(size: 11.5))
-                .kerning(0.5)
-                .foregroundStyle(theme.inkFaint)
-        }
-        .padding(.top, 4) // 与 52pt 主按钮的视觉中线对齐
-    }
-}
-
-/// 顶栏齿轮：悬停浮出按钮底色
-private struct GearButton: View {
-    let theme: PocoTheme
-    let action: () -> Void
-    @State private var hovered = false
-
-    var body: some View {
-        Button(action: action) {
-            Label("设置", systemImage: "gearshape")
-                .labelStyle(.iconOnly)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(hovered ? theme.inkSoft : theme.inkFaint)
-                .frame(width: 24, height: 24)
-                .background(RoundedRectangle(cornerRadius: 7).fill(hovered ? theme.btn : .clear))
-                .contentShape(RoundedRectangle(cornerRadius: 7))
-        }
-        .buttonStyle(.plain)
-        .animation(.easeOut(duration: 0.15), value: hovered)
-        .onHover { hovered = $0 }
-        .help("设置")
-    }
-}
-
-// ============================================================
-// 呼吸动画：用 TimelineView 按余弦曲线起伏透明度（对应 Avalonia 版 SineEaseInOut 关键帧）。
-// 传 nil 即不呼吸——把「是否呼吸 + 用哪套参数」收敛成一个可选配置，避免多个修饰器叠加。
-// ============================================================
-struct BreathConfig {
-    let period: Double
-    let minOpacity: Double
-}
-
-private struct BreathingModifier: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let config: BreathConfig?
-
-    func body(content: Content) -> some View {
-        if let config, !reduceMotion {
-            TimelineView(.animation) { context in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let wave = 0.5 + 0.5 * cos(2 * .pi * t / config.period) // 1 → min → 1
-                content.opacity(config.minOpacity + (1 - config.minOpacity) * wave)
-            }
-        } else {
-            content
-        }
-    }
-}
-
-extension View {
-    func breathing(_ config: BreathConfig?) -> some View {
-        modifier(BreathingModifier(config: config))
+        .animation(.easeInOut(duration: reduceMotion ? 0.12 : 0.45), value: engine.isFocus)
     }
 }

@@ -75,7 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func setupWindow() {
         let w = NSWindow(
             contentRect: .zero,
-            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false)
         w.title = "Poco"
@@ -87,7 +87,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hosting = NSHostingView(rootView: MainView().environmentObject(engine))
         hosting.safeAreaRegions = [] // 内容铺满到隐藏标题栏之下，由视图自己给交通灯留位
         w.contentView = hosting
-        w.setContentSize(NSSize(width: 324, height: 416))
+        w.contentMinSize = NSSize(width: PocoMetrics.windowMinWidth, height: PocoMetrics.windowMinHeight)
+        w.contentMaxSize = NSSize(width: PocoMetrics.windowMaxWidth, height: PocoMetrics.windowMaxHeight)
+        w.setContentSize(NSSize(width: PocoMetrics.windowIdealWidth, height: PocoMetrics.windowIdealHeight))
+        // 允许拖拽边缘适配放大文字，但小工具窗口不提供全屏/缩放绿按钮。
+        w.standardWindowButton(.zoomButton)?.isEnabled = false
         w.center()
         w.delegate = self
         window = w
@@ -97,6 +101,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func setupMainMenu() {
         let appMenu = NSMenu()
         appMenu.addItem(NSMenuItem(title: "关于 Poco", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""))
+        appMenu.addItem(.separator())
+        appMenu.addItem(NSMenuItem(title: "设置…", action: #selector(showSettings), keyEquivalent: ","))
         appMenu.addItem(.separator())
         appMenu.addItem(NSMenuItem(title: "隐藏 Poco", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
         appMenu.addItem(.separator())
@@ -111,6 +117,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let winItem = NSMenuItem(); winItem.submenu = windowMenu; main.addItem(winItem)
         NSApp.mainMenu = main
         NSApp.windowsMenu = windowMenu
+    }
+
+    @objc private func showSettings() {
+        engine.isSettingsOpen = true
+        showMainWindow()
     }
 
     // 关闭按钮 / ⌘W → 隐藏窗口（不销毁），托盘双击/通知点击可再唤出

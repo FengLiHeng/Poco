@@ -230,7 +230,16 @@ final class PomodoroEngine: ObservableObject {
         }
     }
 
-    var primaryLabel: String { state == .running ? "暂停" : "开始" }
+    var primaryLabel: String {
+        switch state {
+        case .running:
+            return "暂停"
+        case .finished:
+            return phase == .focus ? "开始休息" : "继续专注"
+        case .ready, .paused:
+            return "开始"
+        }
+    }
 
     /// 当前正在进行的专注轮次下标（高亮圆点）；非专注或已结束为 nil。
     var currentDotIndex: Int? {
