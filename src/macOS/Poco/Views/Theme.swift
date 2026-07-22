@@ -17,22 +17,22 @@ struct PocoTheme {
     let focusInk: Color    // 专注文字色
     let rest: Color        // 休息主色
     let restInk: Color     // 休息文字色
-    let focusAction: Color // 专注操作色（比进度环更深，保证按钮文字对比度）
+    let focusAction: Color // 专注操作色
     let restAction: Color  // 休息操作色
 
     static let light = PocoTheme(
         bg: Color(hex: 0xF7F4EE), surface: Color(hex: 0xFCF9F5),
-        ink: Color(hex: 0x39332E), inkSoft: Color(hex: 0x6D6661), inkFaint: Color(hex: 0x746E69),
+        ink: Color(hex: 0x39332E), inkSoft: Color(hex: 0x6D6661), inkFaint: Color(hex: 0x9D9792),
         hairline: Color(hex: 0xE0DCD7), btn: Color(hex: 0xEAE7E1), btnHover: Color(hex: 0xE3DFD9),
         onAction: Color(hex: 0xFBFAF7),
         // 专注色：鲜亮暖橙（陶土色大面积铺开发闷，进度环需要更亮的主色）
-        focus: Color(hex: 0xE8772E), focusInk: Color(hex: 0xA94B0D),
+        focus: Color(hex: 0xE8772E), focusInk: Color(hex: 0xC25A14),
         rest: Color(hex: 0x4D9BA1), restInk: Color(hex: 0x2F767D),
-        focusAction: Color(hex: 0xB94F0C), restAction: Color(hex: 0x347C82))
+        focusAction: Color(hex: 0xE8772E), restAction: Color(hex: 0x4D9BA1))
 
     static let dark = PocoTheme(
         bg: Color(hex: 0x201D19), surface: Color(hex: 0x282420),
-        ink: Color(hex: 0xE4DFD8), inkSoft: Color(hex: 0xA39D97), inkFaint: Color(hex: 0x8B857F),
+        ink: Color(hex: 0xE4DFD8), inkSoft: Color(hex: 0xA39D97), inkFaint: Color(hex: 0x6D6862),
         hairline: Color(hex: 0x3D3834), btn: Color(hex: 0x37322D), btnHover: Color(hex: 0x423C37),
         onAction: Color(hex: 0x1A1612),
         focus: Color(hex: 0xF2954E), focusInk: Color(hex: 0xF6AC6E),
